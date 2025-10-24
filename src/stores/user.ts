@@ -1,0 +1,163 @@
+import { defineStore } from 'pinia'
+import { login as loginApi, logout as logoutApi } from '@/api/auth'
+import { getUserButtonPermissions, getUserMenuTree } from '@/api/permission'
+import type { UserLoginDTO, UserLoginVO, PermissionVO } from '@/types/api'
+import { parseJwtToken, isTokenExpired } from '@/utils/jwt'
+import router from '@/router'
+
+interface UserState {
+  userInfo: UserLoginVO | null
+  token: string
+  permissions: string[]
+  menuTree: PermissionVO[]
+}
+
+export const useUserStore = defineStore('user', {
+  state: (): UserState => ({
+    userInfo: null,
+    token: localStorage.getItem('token') || '',
+    permissions: [],
+    menuTree: []
+  }),
+
+  getters: {
+    isLoggedIn: (state) => !!state.token,
+    username: (state) => state.userInfo?.username || '',
+    userId: (state) => state.userInfo?.id || 0
+  },
+
+  actions: {
+    // 登录
+    async login(loginForm: UserLoginDTO) {
+      try {
+        const res = await loginApi(loginForm)
+        const loginData = res.data as unknown as UserLoginVO
+        const { token } = loginData
+        
+        this.token = token
+        this.userInfo = loginData
+        
+        // 保存到 localStorage
+        localStorage.setItem('token', token)
+        localStorage.setItem('userInfo', JSON.stringify(loginData))
+        
+        // 从 JWT 解析权限信息
+        const jwtData = parseJwtToken(token)
+        if (jwtData) {
+          // 直接从JWT获取权限列表
+          this.permissions = jwtData.permissions || []
+          localStorage.setItem('permissions', JSON.stringify(this.permissions))
+          
+          console.log('从JWT解析的权限:', this.permissions)
+          console.log('用户信息:', jwtData.user)
+        }
+        
+        // 获取菜单权限树（如果后端提供）
+        await this.fetchMenuTree()
+        
+        return res
+      } catch (error) {
+        return Promise.reject(error)
+      }
+    },
+
+    // 退出登录
+    async logout() {
+      try {
+        await logoutApi()
+      } catch (error) {
+        console.error('退出登录失败:', error)
+      } finally {
+        this.clearUserInfo()
+        router.push('/login')
+      }
+    },
+
+    // 获取菜单权限树（从后端）
+    async fetchMenuTree() {
+      if (!this.userInfo?.id) return
+
+      try {
+        // 获取菜单权限
+        const menuRes = await getUserMenuTree(this.userInfo.id)
+        this.menuTree = menuRes.data as unknown as PermissionVO[]
+
+        // 保存到 localStorage
+        localStorage.setItem('menuTree', JSON.stringify(this.menuTree))
+      } catch (error) {
+        console.error('获取菜单权限失败:', error)
+      }
+    },
+
+    // 获取用户权限（从后端 - 备用方法）
+    async fetchPermissions() {
+      if (!this.userInfo?.id) return
+
+      try {
+        // 获取按钮权限
+        const permRes = await getUserButtonPermissions(this.userInfo.id)
+        this.permissions = permRes.data as unknown as string[]
+
+        // 获取菜单权限
+        const menuRes = await getUserMenuTree(this.userInfo.id)
+        this.menuTree = menuRes.data as unknown as PermissionVO[]
+
+        // 保存到 localStorage
+        localStorage.setItem('permissions', JSON.stringify(this.permissions))
+        localStorage.setItem('menuTree', JSON.stringify(this.menuTree))
+      } catch (error) {
+        console.error('获取权限失败:', error)
+      }
+    },
+
+    // 检查是否有权限
+    hasPermission(permission: string): boolean {
+      return this.permissions.includes(permission)
+    },
+
+    // 清除用户信息
+    clearUserInfo() {
+      this.token = ''
+      this.userInfo = null
+      this.permissions = []
+      this.menuTree = []
+      
+      localStorage.removeItem('token')
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('permissions')
+      localStorage.removeItem('menuTree')
+    },
+
+    // 从 localStorage 恢复用户信息
+    restoreUserInfo() {
+      const token = localStorage.getItem('token')
+      const userInfo = localStorage.getItem('userInfo')
+      const permissions = localStorage.getItem('permissions')
+      const menuTree = localStorage.getItem('menuTree')
+
+      if (token) {
+        // 检查token是否过期
+        if (isTokenExpired(token)) {
+          console.warn('Token已过期，清除用户信息')
+          this.clearUserInfo()
+          return
+        }
+        
+        this.token = token
+        
+        // 如果没有缓存的权限信息，尝试从JWT解析
+        if (!permissions) {
+          const jwtData = parseJwtToken(token)
+          if (jwtData) {
+            this.permissions = jwtData.permissions || []
+            localStorage.setItem('permissions', JSON.stringify(this.permissions))
+          }
+        }
+      }
+      
+      if (userInfo) this.userInfo = JSON.parse(userInfo)
+      if (permissions) this.permissions = JSON.parse(permissions)
+      if (menuTree) this.menuTree = JSON.parse(menuTree)
+    }
+  }
+})
