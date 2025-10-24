@@ -73,7 +73,7 @@ export function deleteRole(id: number) {
 /**
  * 批量删除角色
  */
-export function batchDeleteRoles(ids: number[]) {
+export function batchDeleteRoles(ids: string[]) {
   return request<ResponseResult<void>>({
     url: '/role/batch',
     method: 'delete',
@@ -84,7 +84,7 @@ export function batchDeleteRoles(ids: number[]) {
 /**
  * 修改角色状态
  */
-export function updateRoleStatus(id: number, status: number) {
+export function updateRoleStatus(id: string, status: number) {
   return request<ResponseResult<void>>({
     url: `/role/${id}/status`,
     method: 'put',
@@ -95,7 +95,7 @@ export function updateRoleStatus(id: number, status: number) {
 /**
  * 为角色分配权限
  */
-export function assignPermissions(id: number, permissionIds: number[]) {
+export function assignPermissions(id: string, permissionIds: number[]) {
   return request<ResponseResult<void>>({
     url: `/role/${id}/permissions`,
     method: 'put',
@@ -106,7 +106,7 @@ export function assignPermissions(id: number, permissionIds: number[]) {
 /**
  * 获取角色权限列表
  */
-export function getRolePermissions(id: number) {
+export function getRolePermissionIds(id: string) {
   return request<ResponseResult<string[]>>({
     url: `/role/${id}/permissions`,
     method: 'get'

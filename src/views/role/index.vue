@@ -91,8 +91,9 @@
     </el-dialog>
 
     <!-- 分配权限对话框 -->
-    <el-dialog v-model="permissionDialogVisible" title="分配权限" width="600px">
+    <el-dialog v-model="permissionDialogVisible" title="分配权限" width="600px" @close="resetPermissionDialog">
       <el-tree
+        v-loading="permissionLoading"
         ref="treeRef"
         :data="permissionTree"
         :props="{ label: 'permissionName', children: 'children' }"
@@ -119,22 +120,23 @@ import {
   batchDeleteRoles,
   updateRoleStatus,
   assignPermissions,
-  getRolePermissions
+  getRolePermissionIds
 } from '@/api/role'
 import { getPermissionTree } from '@/api/permission'
 import type { RoleVO, RoleSaveDTO, RoleQueryDTO, PermissionVO, Page } from '@/types/api'
 
 const loading = ref(false)
 const submitLoading = ref(false)
+const permissionLoading = ref(false)
 const dialogVisible = ref(false)
 const permissionDialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 const treeRef = ref<InstanceType<typeof ElTree>>()
 const tableData = ref<RoleVO[]>([])
 const total = ref(0)
-const selectedIds = ref<number[]>([])
+const selectedIds = ref<string[]>([])
 const permissionTree = ref<PermissionVO[]>([])
-const currentRoleId = ref<number>(0)
+const currentRoleId = ref<string>("")
 
 const queryParams = reactive<RoleQueryDTO>({
   pageNum: 1,
@@ -264,20 +266,29 @@ const handleSubmit = async () => {
 
 const handleAssignPermissions = async (row: RoleVO) => {
   currentRoleId.value = row.id
-  permissionDialogVisible.value = true
+  permissionLoading.value = true
   
-  // 等待对话框和树加载完成
-  await fetchPermissionTree()
-  
-  // 获取角色已有权限
   try {
-    const res = await getRolePermissions(row.id)
-    // 设置选中节点
-    setTimeout(() => {
-      treeRef.value?.setCheckedKeys(res.data as unknown as number[])
-    }, 100)
+    // 1. 先获取权限树
+    await fetchPermissionTree()
+    
+    // 2. 再获取该角色已有的权限
+    const rolePermRes = await getRolePermissionIds(row.id)
+    const rolePermissionIds = rolePermRes.data as unknown as string[]
+    
+    // 3. 显示对话框
+    permissionDialogVisible.value = true
+    
+    // 4. 等待树组件渲染完成后，设置选中状态
+    await new Promise(resolve => setTimeout(resolve, 200))
+    if (treeRef.value) {
+      treeRef.value.setCheckedKeys(rolePermissionIds)
+    }
   } catch (error) {
-    console.error('获取角色权限失败:', error)
+    ElMessage.error('加载权限失败')
+    console.error('获取权限失败:', error)
+  } finally {
+    permissionLoading.value = false
   }
 }
 
@@ -313,6 +324,15 @@ const resetForm = () => {
     description: '',
     status: 1
   })
+}
+
+const resetPermissionDialog = () => {
+  permissionTree.value = []
+  if (treeRef.value) {
+    treeRef.value.setCheckedKeys([])
+  }
+  currentRoleId.value = ""
+  permissionLoading.value = false
 }
 
 onMounted(() => {
