@@ -35,7 +35,7 @@ export interface UserLoginDTO {
 }
 
 export interface UserLoginVO {
-  id: number;
+  id: string;
   username: string;
   name: string;
   token: string;
@@ -82,7 +82,7 @@ export interface RoleQueryDTO {
 }
 
 export interface RoleSaveDTO {
-  id?: number;
+  id?: string;
   roleCode: string;
   roleName: string;
   description?: string;
@@ -91,7 +91,7 @@ export interface RoleSaveDTO {
 }
 
 export interface RoleVO {
-  id: number;
+  id: string;
   roleCode: string;
   roleName: string;
   description: string;
@@ -108,12 +108,12 @@ export interface PermissionQueryDTO {
   permissionName?: string;
   permissionType?: number;
   status?: number;
-  parentId?: number;
+  parentId?: string;
 }
 
 export interface PermissionSaveDTO {
-  id?: number;
-  parentId?: number;
+  id?: string;
+  parentId?: string;
   permissionCode: string;
   permissionName: string;
   permissionType: number;
@@ -125,8 +125,8 @@ export interface PermissionSaveDTO {
 }
 
 export interface PermissionVO {
-  id: number;
-  parentId: number;
+  id: string;
+  parentId: string;
   permissionCode: string;
   permissionName: string;
   permissionType: number;
