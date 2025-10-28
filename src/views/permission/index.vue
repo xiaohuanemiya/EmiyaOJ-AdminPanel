@@ -3,7 +3,7 @@
     <el-card>
       <!-- 工具栏 -->
       <div class="toolbar">
-        <el-button type="primary" v-permission="'PERMISSION_ADD'" @click="handleAdd">
+        <el-button type="primary" v-permission="'PERMISSION.ADD'" @click="handleAdd">
           <el-icon><Plus /></el-icon>
           新增权限
         </el-button>
@@ -44,16 +44,16 @@
               :active-value="1"
               :inactive-value="0"
               @change="handleStatusChange(row)"
-              v-permission="'PERMISSION_EDIT'"
+              v-permission="'.EDIT'"
             />
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" v-permission="'PERMISSION_EDIT'" @click="handleEdit(row)">
+            <el-button type="primary" size="small" v-permission="'PERMISSION.EDIT'" @click="handleEdit(row)">
               编辑
             </el-button>
-            <el-button type="danger" size="small" v-permission="'PERMISSION_DELETE'" @click="handleDelete(row.id)">
+            <el-button type="danger" size="small" v-permission="'PERMISSION.DELETE'" @click="handleDelete(row.id)">
               删除
             </el-button>
           </template>

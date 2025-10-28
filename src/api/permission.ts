@@ -122,23 +122,3 @@ export function getPermissionsByUserId(userId: number) {
     method: 'get'
   })
 }
-
-/**
- * 获取用户菜单权限树
- */
-export function getUserMenuTree(userId: string) {
-  return request<ResponseResult<PermissionVO[]>>({
-    url: `/permission/menu/${userId}`,
-    method: 'get'
-  })
-}
-
-/**
- * 获取用户按钮权限列表
- */
-export function getUserButtonPermissions(userId: string) {
-  return request<ResponseResult<string[]>>({
-    url: `/permission/button/${userId}`,
-    method: 'get'
-  })
-}
