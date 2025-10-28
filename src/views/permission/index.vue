@@ -135,7 +135,7 @@ const tableData = ref<PermissionVO[]>([])
 const permissionTreeOptions = ref<PermissionVO[]>([])
 
 const formData = reactive<PermissionSaveDTO>({
-  parentId: 0,
+  parentId: '-1',
   permissionCode: '',
   permissionName: '',
   permissionType: 1,

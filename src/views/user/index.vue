@@ -147,7 +147,7 @@ const tableData = ref<UserVO[]>([])
 const total = ref(0)
 const selectedIds = ref<string[]>([])
 const allRoles = ref<RoleVO[]>([])
-const selectedRoleIds = ref<number[]>([])
+const selectedRoleIds = ref<string[]>([])
 const currentUserId = ref<string>("")
 
 const queryParams = reactive<PageDTO>({

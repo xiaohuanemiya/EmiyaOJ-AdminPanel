@@ -46,7 +46,7 @@ export interface UserPageDTO extends PageDTO {
 }
 
 export interface UserSaveDTO {
-  id?: number;
+  id?: string;
   username: string;
   password?: string;
   nickname?: string;
@@ -87,7 +87,7 @@ export interface RoleSaveDTO {
   roleName: string;
   description?: string;
   status?: number;
-  permissionIds?: number[];
+  permissionIds?: string[];
 }
 
 export interface RoleVO {
