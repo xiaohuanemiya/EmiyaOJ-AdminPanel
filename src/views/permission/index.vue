@@ -68,10 +68,12 @@
           <el-tree-select
             v-model="formData.parentId"
             :data="permissionTreeOptions"
-            :props="{ label: 'permissionName', children: 'children' }"
+            :props="{ label: 'permissionName', children: 'children', value: 'id' }"
             check-strictly
+            node-key="id"
             placeholder="选择上级权限（不选则为顶级权限）"
             clearable
+            filterable
           />
         </el-form-item>
         <el-form-item label="权限编码" prop="permissionCode">
@@ -135,7 +137,7 @@ const tableData = ref<PermissionVO[]>([])
 const permissionTreeOptions = ref<PermissionVO[]>([])
 
 const formData = reactive<PermissionSaveDTO>({
-  parentId: '-1',
+  parentId: undefined,
   permissionCode: '',
   permissionName: '',
   permissionType: 1,
@@ -167,7 +169,10 @@ const fetchData = async () => {
   try {
     const res = await getPermissionTree()
     tableData.value = res.data as unknown as PermissionVO[]
-    permissionTreeOptions.value = res.data as unknown as PermissionVO[]
+    // 为树选择器添加一个"根节点"选项
+    const treeOptions = [...(res.data as unknown as PermissionVO[])]
+    // 可选：在顶部添加一个"无父节点"的选项
+    permissionTreeOptions.value = treeOptions
   } catch (error) {
     console.error('查询失败:', error)
   } finally {
@@ -184,7 +189,7 @@ const handleEdit = (row: PermissionVO) => {
   dialogTitle.value = '编辑权限'
   Object.assign(formData, {
     id: row.id,
-    parentId: row.parentId || 0,
+    parentId: row.parentId === '-1' ? undefined : row.parentId,
     permissionCode: row.permissionCode,
     permissionName: row.permissionName,
     permissionType: row.permissionType,
@@ -274,7 +279,7 @@ const resetForm = () => {
   formRef.value?.resetFields()
   Object.assign(formData, {
     id: undefined,
-    parentId: 0,
+    parentId: undefined,
     permissionCode: '',
     permissionName: '',
     permissionType: 1,
