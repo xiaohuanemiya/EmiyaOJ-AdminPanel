@@ -59,10 +59,6 @@
             <el-icon><Setting /></el-icon>
             <template #title>语言管理</template>
           </el-menu-item>
-          <el-menu-item index="/testcase" v-permission="'TESTCASE.LIST'">
-            <el-icon><List /></el-icon>
-            <template #title>测试用例</template>
-          </el-menu-item>
         </el-menu>
       </div>
 

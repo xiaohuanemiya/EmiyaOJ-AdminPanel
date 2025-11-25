@@ -205,12 +205,149 @@
         <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 测试用例管理对话框 -->
+    <el-dialog
+      v-model="testCaseDialogVisible"
+      :title="'测试用例管理 - ' + currentProblem?.title"
+      width="900px"
+      destroy-on-close
+    >
+      <div class="testcase-header">
+        <el-button type="primary" v-permission="'TESTCASE.ADD'" @click="handleAddTestCase">
+          <el-icon><Plus /></el-icon>
+          新增测试用例
+        </el-button>
+        <el-button type="danger" v-permission="'TESTCASE.DELETE'" :disabled="selectedTestCaseIds.length === 0" @click="handleBatchDeleteTestCase">
+          <el-icon><Delete /></el-icon>
+          批量删除
+        </el-button>
+      </div>
+
+      <el-table
+        v-loading="testCaseLoading"
+        :data="testCaseTableData"
+        @selection-change="handleTestCaseSelectionChange"
+        style="margin-top: 15px;"
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="sortOrder" label="排序" width="80" />
+        <el-table-column label="是否样例" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.isSample === 1 ? 'success' : 'info'">
+              {{ row.isSample === 1 ? '是' : '否' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="score" label="分值" width="80" />
+        <el-table-column label="输入数据" min-width="150">
+          <template #default="{ row }">
+            <el-text class="data-preview" truncated>{{ row.input }}</el-text>
+          </template>
+        </el-table-column>
+        <el-table-column label="预期输出" min-width="150">
+          <template #default="{ row }">
+            <el-text class="data-preview" truncated>{{ row.output }}</el-text>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" @click="handleViewTestCase(row)">
+              查看
+            </el-button>
+            <el-button type="warning" size="small" v-permission="'TESTCASE.EDIT'" @click="handleEditTestCase(row)">
+              编辑
+            </el-button>
+            <el-button type="danger" size="small" v-permission="'TESTCASE.DELETE'" @click="handleDeleteTestCase(row.id)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <template #footer>
+        <el-button @click="testCaseDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 新增/编辑测试用例对话框 -->
+    <el-dialog
+      v-model="testCaseFormDialogVisible"
+      :title="testCaseFormDialogTitle"
+      width="700px"
+      @close="resetTestCaseForm"
+    >
+      <el-form ref="testCaseFormRef" :model="testCaseFormData" :rules="testCaseRules" label-width="100px">
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-form-item label="排序" prop="sortOrder">
+              <el-input-number v-model="testCaseFormData.sortOrder" :min="0" :max="9999" style="width: 100%;" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="是否样例" prop="isSample">
+              <el-radio-group v-model="testCaseFormData.isSample">
+                <el-radio :value="1">是</el-radio>
+                <el-radio :value="0">否</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="分值" prop="score">
+              <el-input-number v-model="testCaseFormData.score" :min="0" :max="100" style="width: 100%;" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="输入数据" prop="input">
+          <el-input v-model="testCaseFormData.input" type="textarea" :rows="8" placeholder="请输入测试输入数据" />
+        </el-form-item>
+        <el-form-item label="预期输出" prop="output">
+          <el-input v-model="testCaseFormData.output" type="textarea" :rows="8" placeholder="请输入预期输出数据" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="testCaseFormDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleTestCaseSubmit" :loading="testCaseSubmitLoading">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 查看测试用例详情对话框 -->
+    <el-dialog
+      v-model="testCaseViewDialogVisible"
+      title="测试用例详情"
+      width="700px"
+    >
+      <el-descriptions :column="3" border>
+        <el-descriptions-item label="ID">{{ currentTestCase?.id }}</el-descriptions-item>
+        <el-descriptions-item label="排序">{{ currentTestCase?.sortOrder }}</el-descriptions-item>
+        <el-descriptions-item label="分值">{{ currentTestCase?.score }}</el-descriptions-item>
+        <el-descriptions-item label="是否样例">
+          <el-tag :type="currentTestCase?.isSample === 1 ? 'success' : 'info'">
+            {{ currentTestCase?.isSample === 1 ? '是' : '否' }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="创建时间" :span="2">{{ currentTestCase?.createTime }}</el-descriptions-item>
+      </el-descriptions>
+      <div class="data-section">
+        <div class="data-block">
+          <h4>输入数据</h4>
+          <pre class="data-content">{{ currentTestCase?.input }}</pre>
+        </div>
+        <div class="data-block">
+          <h4>预期输出</h4>
+          <pre class="data-content">{{ currentTestCase?.output }}</pre>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="testCaseViewDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import {
   getProblemPage,
@@ -220,9 +357,15 @@ import {
   batchDeleteProblems,
   updateProblemStatus
 } from '@/api/problem'
-import type { ProblemVO, ProblemSaveDTO, ProblemQueryDTO, PageVO } from '@/types/api'
+import {
+  getTestCasesByProblemId,
+  addTestCase,
+  updateTestCase,
+  deleteTestCase,
+  batchDeleteTestCases
+} from '@/api/testcase'
+import type { ProblemVO, ProblemSaveDTO, ProblemQueryDTO, PageVO, TestCaseVO, TestCaseSaveDTO } from '@/types/api'
 
-const router = useRouter()
 const loading = ref(false)
 const submitLoading = ref(false)
 const dialogVisible = ref(false)
@@ -272,6 +415,37 @@ const rules: FormRules = {
 }
 
 const dialogTitle = ref('新增题目')
+
+// 测试用例相关
+const testCaseDialogVisible = ref(false)
+const testCaseFormDialogVisible = ref(false)
+const testCaseViewDialogVisible = ref(false)
+const testCaseLoading = ref(false)
+const testCaseSubmitLoading = ref(false)
+const testCaseTableData = ref<TestCaseVO[]>([])
+const selectedTestCaseIds = ref<number[]>([])
+const currentProblem = ref<ProblemVO | null>(null)
+const currentTestCase = ref<TestCaseVO | null>(null)
+const testCaseFormRef = ref<FormInstance>()
+const testCaseFormDialogTitle = ref('新增测试用例')
+
+const testCaseFormData = reactive<TestCaseSaveDTO>({
+  problemId: 0,
+  input: '',
+  output: '',
+  isSample: 0,
+  score: 10,
+  sortOrder: 1
+})
+
+const testCaseRules: FormRules = {
+  input: [
+    { required: true, message: '请输入测试输入数据', trigger: 'blur' }
+  ],
+  output: [
+    { required: true, message: '请输入预期输出数据', trigger: 'blur' }
+  ]
+}
 
 // 获取难度标签
 const getDifficultyLabel = (difficulty: number) => {
@@ -399,9 +573,132 @@ const handleStatusChange = async (row: ProblemVO): Promise<boolean> => {
   }
 }
 
-// 跳转测试用例管理
-const handleTestCase = (row: ProblemVO) => {
-  router.push(`/testcase?problemId=${row.id}&problemTitle=${encodeURIComponent(row.title)}`)
+// 打开测试用例管理
+const handleTestCase = async (row: ProblemVO) => {
+  currentProblem.value = row
+  testCaseDialogVisible.value = true
+  await fetchTestCaseData()
+}
+
+// 获取测试用例数据
+const fetchTestCaseData = async () => {
+  if (!currentProblem.value) return
+  
+  testCaseLoading.value = true
+  try {
+    const res = await getTestCasesByProblemId(currentProblem.value.id)
+    testCaseTableData.value = (res.data || []) as unknown as TestCaseVO[]
+  } catch (error) {
+    console.error('查询测试用例失败:', error)
+  } finally {
+    testCaseLoading.value = false
+  }
+}
+
+// 新增测试用例
+const handleAddTestCase = () => {
+  if (!currentProblem.value) return
+  testCaseFormDialogTitle.value = '新增测试用例'
+  testCaseFormData.problemId = currentProblem.value.id
+  // 设置默认排序为当前最大排序+1
+  const maxSort = testCaseTableData.value.reduce((max, item) => Math.max(max, item.sortOrder), 0)
+  testCaseFormData.sortOrder = maxSort + 1
+  testCaseFormDialogVisible.value = true
+}
+
+// 查看测试用例
+const handleViewTestCase = (row: TestCaseVO) => {
+  currentTestCase.value = row
+  testCaseViewDialogVisible.value = true
+}
+
+// 编辑测试用例
+const handleEditTestCase = (row: TestCaseVO) => {
+  testCaseFormDialogTitle.value = '编辑测试用例'
+  Object.assign(testCaseFormData, {
+    id: row.id,
+    problemId: row.problemId,
+    input: row.input,
+    output: row.output,
+    isSample: row.isSample,
+    score: row.score,
+    sortOrder: row.sortOrder
+  })
+  testCaseFormDialogVisible.value = true
+}
+
+// 删除测试用例
+const handleDeleteTestCase = async (id: number) => {
+  try {
+    await ElMessageBox.confirm('确认删除该测试用例吗？', '提示', { type: 'warning' })
+    await deleteTestCase(id)
+    ElMessage.success('删除成功')
+    fetchTestCaseData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除测试用例失败:', error)
+    }
+  }
+}
+
+// 批量删除测试用例
+const handleBatchDeleteTestCase = async () => {
+  try {
+    await ElMessageBox.confirm(`确认删除选中的 ${selectedTestCaseIds.value.length} 个测试用例吗？`, '提示', { type: 'warning' })
+    await batchDeleteTestCases(selectedTestCaseIds.value)
+    ElMessage.success('删除成功')
+    selectedTestCaseIds.value = []
+    fetchTestCaseData()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除测试用例失败:', error)
+    }
+  }
+}
+
+// 提交测试用例表单
+const handleTestCaseSubmit = async () => {
+  if (!testCaseFormRef.value) return
+  
+  await testCaseFormRef.value.validate(async (valid) => {
+    if (valid) {
+      testCaseSubmitLoading.value = true
+      try {
+        if (testCaseFormData.id) {
+          await updateTestCase(testCaseFormData)
+          ElMessage.success('修改成功')
+        } else {
+          await addTestCase(testCaseFormData)
+          ElMessage.success('新增成功')
+        }
+        testCaseFormDialogVisible.value = false
+        fetchTestCaseData()
+      } catch (error) {
+        console.error('操作失败:', error)
+      } finally {
+        testCaseSubmitLoading.value = false
+      }
+    }
+  })
+}
+
+// 测试用例选择变化
+const handleTestCaseSelectionChange = (selection: TestCaseVO[]) => {
+  selectedTestCaseIds.value = selection.map(item => item.id)
+}
+
+// 重置测试用例表单
+const resetTestCaseForm = () => {
+  testCaseFormRef.value?.resetFields()
+  Object.assign(testCaseFormData, {
+    id: undefined,
+    problemId: currentProblem.value?.id || 0,
+    input: '',
+    output: '',
+    isSample: 0,
+    score: 10,
+    sortOrder: 1
+  })
 }
 
 // 提交表单
@@ -483,5 +780,45 @@ onMounted(() => {
 .toolbar-right {
   display: flex;
   gap: 10px;
+}
+
+.testcase-header {
+  display: flex;
+  gap: 10px;
+}
+
+.data-preview {
+  font-family: monospace;
+  font-size: 12px;
+  max-width: 200px;
+}
+
+.data-section {
+  margin-top: 20px;
+  display: flex;
+  gap: 20px;
+}
+
+.data-block {
+  flex: 1;
+}
+
+.data-block h4 {
+  margin-bottom: 10px;
+  color: #303133;
+}
+
+.data-content {
+  background: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 0;
+  font-family: monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
 }
 </style>
