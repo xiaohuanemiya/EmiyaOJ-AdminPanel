@@ -36,6 +36,18 @@ const routes: RouteRecordRaw[] = [
         name: 'Permission',
         component: () => import('@/views/permission/index.vue'),
         meta: { title: '权限管理', icon: 'Lock', permission: 'PERMISSION.LIST' }
+      },
+      {
+        path: 'problem',
+        name: 'Problem',
+        component: () => import('@/views/problem/index.vue'),
+        meta: { title: '题目管理', icon: 'Document', permission: 'PROBLEM.LIST' }
+      },
+      {
+        path: 'language',
+        name: 'Language',
+        component: () => import('@/views/language/index.vue'),
+        meta: { title: '语言管理', icon: 'Setting', permission: 'LANGUAGE.LIST' }
       }
     ]
   },
