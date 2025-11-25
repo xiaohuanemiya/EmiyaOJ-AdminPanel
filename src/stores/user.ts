@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { login as loginApi, logout as logoutApi } from '@/api/auth'
-import { getUserButtonPermissions, getUserMenuTree } from '@/api/permission'
 import type { UserLoginDTO, UserLoginVO, PermissionVO } from '@/types/api'
 import { parseJwtToken, isTokenExpired } from '@/utils/jwt'
 import router from '@/router'
@@ -51,9 +50,9 @@ export const useUserStore = defineStore('user', {
           console.log('从JWT解析的权限:', this.permissions)
           console.log('用户信息:', jwtData.user)
         }
-        
-        // 获取菜单权限树（如果后端提供）
-        await this.fetchMenuTree()
+        // 弃用
+        // 获取菜单权限树（如果后端提供
+        // await this.fetchMenuTree()
         
         return res
       } catch (error) {
@@ -70,43 +69,6 @@ export const useUserStore = defineStore('user', {
       } finally {
         this.clearUserInfo()
         router.push('/login')
-      }
-    },
-
-    // 获取菜单权限树（从后端）
-    async fetchMenuTree() {
-      if (!this.userInfo?.id) return
-
-      try {
-        // 获取菜单权限
-        const menuRes = await getUserMenuTree(this.userInfo.id)
-        this.menuTree = menuRes.data as unknown as PermissionVO[]
-
-        // 保存到 localStorage
-        localStorage.setItem('menuTree', JSON.stringify(this.menuTree))
-      } catch (error) {
-        console.error('获取菜单权限失败:', error)
-      }
-    },
-
-    // 获取用户权限（从后端 - 备用方法）
-    async fetchPermissions() {
-      if (!this.userInfo?.id) return
-
-      try {
-        // 获取按钮权限
-        const permRes = await getUserButtonPermissions(this.userInfo.id)
-        this.permissions = permRes.data as unknown as string[]
-
-        // 获取菜单权限
-        const menuRes = await getUserMenuTree(this.userInfo.id)
-        this.menuTree = menuRes.data as unknown as PermissionVO[]
-
-        // 保存到 localStorage
-        localStorage.setItem('permissions', JSON.stringify(this.permissions))
-        localStorage.setItem('menuTree', JSON.stringify(this.menuTree))
-      } catch (error) {
-        console.error('获取权限失败:', error)
       }
     },
 

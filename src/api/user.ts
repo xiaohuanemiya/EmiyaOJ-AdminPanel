@@ -96,7 +96,7 @@ export function updateUserStatus(id: string, status: number) {
 /**
  * 为用户分配角色
  */
-export function assignRoles(id: string, roleIds: number[]) {
+export function assignRoles(id: string, roleIds: string[]) {
   return request<ResponseResult<void>>({
     url: `/user/${id}/roles`,
     method: 'put',

@@ -46,7 +46,7 @@ export interface UserPageDTO extends PageDTO {
 }
 
 export interface UserSaveDTO {
-  id?: number;
+  id?: string;
   username: string;
   password?: string;
   nickname?: string;
@@ -87,7 +87,7 @@ export interface RoleSaveDTO {
   roleName: string;
   description?: string;
   status?: number;
-  permissionIds?: number[];
+  permissionIds?: string[];
 }
 
 export interface RoleVO {
@@ -142,6 +142,93 @@ export interface PermissionVO {
   children?: PermissionVO[];
 }
 
+// ========== 语言相关 ==========
+
+export interface LanguageVO {
+  id: number;
+  name: string;
+  version: string;
+  compileCommand: string;
+  executeCommand: string;
+  sourceFileExt: string;
+  executableExt: string;
+  isCompiled: number;
+  timeLimitMultiplier: number;
+  memoryLimitMultiplier: number;
+  status: number;
+  createTime: string;
+  updateTime: string;
+}
+
+// ========== 题目相关 ==========
+
+export interface ProblemQueryDTO extends PageDTO {
+  difficulty?: number;
+  status?: number;
+  keyword?: string;
+}
+
+export interface ProblemSaveDTO {
+  id?: number;
+  title: string;
+  description: string;
+  inputDescription?: string;
+  outputDescription?: string;
+  sampleInput?: string;
+  sampleOutput?: string;
+  hint?: string;
+  difficulty?: number;
+  timeLimit: number;
+  memoryLimit: number;
+  stackLimit?: number;
+  source?: string;
+  status?: number;
+}
+
+export interface ProblemVO {
+  id: number;
+  title: string;
+  description: string;
+  inputDescription: string;
+  outputDescription: string;
+  sampleInput: string;
+  sampleOutput: string;
+  hint: string;
+  difficulty: number;
+  timeLimit: number;
+  memoryLimit: number;
+  stackLimit: number;
+  source: string;
+  status: number;
+  acceptCount: number;
+  submitCount: number;
+  createTime: string;
+  updateTime: string;
+}
+
+// ========== 测试用例相关 ==========
+
+export interface TestCaseSaveDTO {
+  id?: number;
+  problemId: number;
+  input: string;
+  output: string;
+  isSample?: number;
+  score?: number;
+  sortOrder?: number;
+}
+
+export interface TestCaseVO {
+  id: number;
+  problemId: number;
+  input: string;
+  output: string;
+  isSample: number;
+  score: number;
+  sortOrder: number;
+  createTime: string;
+}
+
 // ========== 枚举类型 ==========
 
 export enum UserStatus {
@@ -161,6 +248,22 @@ export enum PermissionType {
 }
 
 export enum PermissionStatus {
+  DISABLED = 0,
+  ENABLED = 1
+}
+
+export enum ProblemDifficulty {
+  EASY = 1,
+  MEDIUM = 2,
+  HARD = 3
+}
+
+export enum ProblemStatus {
+  HIDDEN = 0,
+  PUBLIC = 1
+}
+
+export enum LanguageStatus {
   DISABLED = 0,
   ENABLED = 1
 }

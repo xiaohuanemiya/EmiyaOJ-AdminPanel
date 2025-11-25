@@ -84,7 +84,7 @@ export function batchDeletePermissions(ids: number[]) {
 /**
  * 修改权限状态
  */
-export function updatePermissionStatus(id: number, status: number) {
+export function updatePermissionStatus(id: string, status: number) {
   return request<ResponseResult<void>>({
     url: `/permission/${id}/status`,
     method: 'put',
@@ -119,26 +119,6 @@ export function getPermissionsByRoleId(roleId: number) {
 export function getPermissionsByUserId(userId: number) {
   return request<ResponseResult<PermissionVO[]>>({
     url: `/permission/user/${userId}`,
-    method: 'get'
-  })
-}
-
-/**
- * 获取用户菜单权限树
- */
-export function getUserMenuTree(userId: number) {
-  return request<ResponseResult<PermissionVO[]>>({
-    url: `/permission/menu/${userId}`,
-    method: 'get'
-  })
-}
-
-/**
- * 获取用户按钮权限列表
- */
-export function getUserButtonPermissions(userId: number) {
-  return request<ResponseResult<string[]>>({
-    url: `/permission/button/${userId}`,
     method: 'get'
   })
 }
