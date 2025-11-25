@@ -51,6 +51,18 @@
             <el-icon><Lock /></el-icon>
             <template #title>权限管理</template>
           </el-menu-item>
+          <el-menu-item index="/problem" v-permission="'PROBLEM.LIST'">
+            <el-icon><Document /></el-icon>
+            <template #title>题目管理</template>
+          </el-menu-item>
+          <el-menu-item index="/language" v-permission="'LANGUAGE.LIST'">
+            <el-icon><Setting /></el-icon>
+            <template #title>语言管理</template>
+          </el-menu-item>
+          <el-menu-item index="/testcase" v-permission="'TESTCASE.LIST'">
+            <el-icon><List /></el-icon>
+            <template #title>测试用例</template>
+          </el-menu-item>
         </el-menu>
       </div>
 
