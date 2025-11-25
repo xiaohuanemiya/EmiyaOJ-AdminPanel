@@ -89,7 +89,7 @@
               v-model="row.status"
               :active-value="1"
               :inactive-value="0"
-              @change="handleStatusChange(row)"
+              :before-change="() => handleStatusChange(row)"
               v-permission="'PROBLEM.EDIT'"
             />
           </template>
@@ -388,12 +388,14 @@ const handleBatchDelete = async () => {
 }
 
 // 修改状态
-const handleStatusChange = async (row: ProblemVO) => {
+const handleStatusChange = async (row: ProblemVO): Promise<boolean> => {
+  const newStatus = row.status === 1 ? 0 : 1
   try {
-    await updateProblemStatus(row.id, row.status)
+    await updateProblemStatus(row.id, newStatus)
     ElMessage.success('状态修改成功')
+    return true
   } catch (error) {
-    row.status = row.status === 1 ? 0 : 1
+    return false
   }
 }
 
