@@ -396,9 +396,11 @@ const handleSubmit = async () => {
     if (valid) {
       submitLoading.value = true
       try {
-        formData.id 
-          ? await updateBlog(formData) 
-          : await addBlog(formData)
+        if (formData.id) {
+          await updateBlog(formData)
+        } else {
+          await addBlog(formData)
+        }
         
         ElMessage.success(formData.id ? '修改成功' : '新增成功')
         dialogVisible.value = false
