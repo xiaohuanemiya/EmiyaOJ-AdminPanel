@@ -267,3 +267,51 @@ export enum LanguageStatus {
   DISABLED = 0,
   ENABLED = 1
 }
+
+// ========== 博客相关 ==========
+
+export interface BlogQueryDTO extends PageDTO {
+  status?: number;
+  category?: string;
+  keyword?: string;
+}
+
+export interface BlogSaveDTO {
+  id?: number;
+  title: string;
+  summary?: string;
+  content: string;
+  author?: string;
+  category?: string;
+  tags?: string[];
+  coverImage?: string;
+  status?: number;
+  isTop?: number;
+}
+
+export interface BlogVO {
+  id: number;
+  title: string;
+  summary: string;
+  content: string;
+  author: string;
+  category: string;
+  tags: string[];
+  coverImage: string;
+  viewCount: number;
+  likeCount: number;
+  status: number;
+  isTop: number;
+  createTime: string;
+  updateTime: string;
+}
+
+export enum BlogStatus {
+  DRAFT = 0,
+  PUBLISHED = 1
+}
+
+export enum BlogTop {
+  NO = 0,
+  YES = 1
+}
