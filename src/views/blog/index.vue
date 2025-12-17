@@ -207,7 +207,7 @@ import {
   updateBlogStatus,
   updateBlogTop
 } from '@/api/blog'
-import type { BlogVO, BlogSaveDTO, BlogQueryDTO } from '@/types/api'
+import type { BlogVO, BlogSaveDTO, BlogQueryDTO, PageVO } from '@/types/api'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -268,10 +268,9 @@ const fetchData = async () => {
   loading.value = true
   try {
     const res = await getBlogPage(queryParams)
-    if (res.code === 200) {
-      tableData.value = res.data.list
-      total.value = res.data.total
-    }
+    const pageData = res.data as unknown as PageVO<BlogVO>
+    tableData.value = pageData.list
+    total.value = pageData.total
   } catch (error) {
     console.error('获取博客列表失败:', error)
   } finally {
@@ -327,11 +326,9 @@ const handleDelete = async (id: number) => {
       type: 'warning'
     })
     
-    const res = await deleteBlog(id)
-    if (res.code === 200) {
-      ElMessage.success('删除成功')
-      fetchData()
-    }
+    await deleteBlog(id)
+    ElMessage.success('删除成功')
+    fetchData()
   } catch (error: any) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
@@ -348,11 +345,9 @@ const handleBatchDelete = async () => {
       type: 'warning'
     })
     
-    const res = await batchDeleteBlogs(selectedIds.value)
-    if (res.code === 200) {
-      ElMessage.success('批量删除成功')
-      fetchData()
-    }
+    await batchDeleteBlogs(selectedIds.value)
+    ElMessage.success('批量删除成功')
+    fetchData()
   } catch (error: any) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
@@ -369,13 +364,10 @@ const handleSelectionChange = (selection: BlogVO[]) => {
 const handleStatusChange = async (row: BlogVO) => {
   try {
     const newStatus = row.status === 1 ? 0 : 1
-    const res = await updateBlogStatus(row.id, newStatus)
-    if (res.code === 200) {
-      ElMessage.success('状态修改成功')
-      row.status = newStatus
-      return true
-    }
-    return false
+    await updateBlogStatus(row.id, newStatus)
+    ElMessage.success('状态修改成功')
+    row.status = newStatus
+    return true
   } catch (error) {
     console.error('状态修改失败:', error)
     return false
@@ -386,13 +378,10 @@ const handleStatusChange = async (row: BlogVO) => {
 const handleTopChange = async (row: BlogVO) => {
   try {
     const newTop = row.isTop === 1 ? 0 : 1
-    const res = await updateBlogTop(row.id, newTop)
-    if (res.code === 200) {
-      ElMessage.success('置顶状态修改成功')
-      row.isTop = newTop
-      return true
-    }
-    return false
+    await updateBlogTop(row.id, newTop)
+    ElMessage.success('置顶状态修改成功')
+    row.isTop = newTop
+    return true
   } catch (error) {
     console.error('置顶状态修改失败:', error)
     return false
@@ -407,15 +396,13 @@ const handleSubmit = async () => {
     if (valid) {
       submitLoading.value = true
       try {
-        const res = formData.id 
+        formData.id 
           ? await updateBlog(formData) 
           : await addBlog(formData)
         
-        if (res.code === 200) {
-          ElMessage.success(formData.id ? '修改成功' : '新增成功')
-          dialogVisible.value = false
-          fetchData()
-        }
+        ElMessage.success(formData.id ? '修改成功' : '新增成功')
+        dialogVisible.value = false
+        fetchData()
       } catch (error) {
         console.error('提交失败:', error)
       } finally {
