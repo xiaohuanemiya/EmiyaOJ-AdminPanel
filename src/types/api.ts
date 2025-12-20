@@ -267,3 +267,75 @@ export enum LanguageStatus {
   DISABLED = 0,
   ENABLED = 1
 }
+
+// ========== 博客相关 ==========
+
+export interface BlogQueryDTO {
+  userId?: number;
+  title?: string;
+  createTime?: string;
+  pageNo: number;
+  pageSize: number;
+}
+
+export interface BlogAddDTO {
+  userId?: number;
+  title: string;
+  content: string;
+  tagIds: number[];
+}
+
+export interface BlogUpdateDTO {
+  userId?: number;
+  title: string;
+  content: string;
+}
+
+export interface BlogVO {
+  id: string;
+  userId: string;
+  title: string;
+  content: string;
+  createTime: string;
+  updateTime: string;
+  // 博客关联的标签列表（如果后端返回）
+  tags?: BlogTagVO[];
+}
+
+export interface BlogTagVO {
+  id: string;
+  name: string;
+  desc: string;
+}
+
+export interface UserBlogVO {
+  userId: string;
+  username: string;
+  nickname: string;
+  blogCount: number;
+  starCount: number;
+}
+
+// ========== 评论相关 ==========
+
+export interface CommentQueryDTO {
+  userId?: number;
+  blogId?: number;
+  fromDay?: string;
+  toDay?: string;
+}
+
+export interface CommentSaveDTO {
+  content: string;
+}
+
+export interface CommentVO {
+  id: string;
+  userId: string;
+  blogId?: string;
+  content?: string;
+  username: string;
+  nickname: string;
+  createTime: string;
+  updateTime: string;
+}
