@@ -59,6 +59,10 @@
             <el-icon><Setting /></el-icon>
             <template #title>语言管理</template>
           </el-menu-item>
+          <el-menu-item index="/blog" v-permission="'BLOG.LIST'">
+            <el-icon><EditPen /></el-icon>
+            <template #title>博客管理</template>
+          </el-menu-item>
         </el-menu>
       </div>
 

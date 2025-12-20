@@ -270,48 +270,72 @@ export enum LanguageStatus {
 
 // ========== 博客相关 ==========
 
-export interface BlogQueryDTO extends PageDTO {
-  status?: number;
-  category?: string;
-  keyword?: string;
+export interface BlogQueryDTO {
+  userId?: number;
+  title?: string;
+  createTime?: string;
+  pageNo: number;
+  pageSize: number;
 }
 
-export interface BlogSaveDTO {
-  id?: number;
+export interface BlogAddDTO {
+  userId?: number;
   title: string;
-  summary?: string;
   content: string;
-  author?: string;
-  category?: string;
-  tags?: string[];
-  coverImage?: string;
-  status?: number;
-  isTop?: number;
+  tagIds: number[];
+}
+
+export interface BlogUpdateDTO {
+  userId?: number;
+  title: string;
+  content: string;
 }
 
 export interface BlogVO {
-  id: number;
+  id: string;
+  userId: string;
   title: string;
-  summary: string;
   content: string;
-  author: string;
-  category: string;
-  tags: string[];
-  coverImage: string;
-  viewCount: number;
-  likeCount: number;
-  status: number;
-  isTop: number;
   createTime: string;
   updateTime: string;
+  // 博客关联的标签列表（如果后端返回）
+  tags?: BlogTagVO[];
 }
 
-export enum BlogStatus {
-  DRAFT = 0,
-  PUBLISHED = 1
+export interface BlogTagVO {
+  id: string;
+  name: string;
+  desc: string;
 }
 
-export enum BlogTop {
-  NO = 0,
-  YES = 1
+export interface UserBlogVO {
+  userId: string;
+  username: string;
+  nickname: string;
+  blogCount: number;
+  starCount: number;
+}
+
+// ========== 评论相关 ==========
+
+export interface CommentQueryDTO {
+  userId?: number;
+  blogId?: number;
+  fromDay?: string;
+  toDay?: string;
+}
+
+export interface CommentSaveDTO {
+  content: string;
+}
+
+export interface CommentVO {
+  id: string;
+  userId: string;
+  blogId?: string;
+  content?: string;
+  username: string;
+  nickname: string;
+  createTime: string;
+  updateTime: string;
 }
