@@ -48,6 +48,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Language',
         component: () => import('@/views/language/index.vue'),
         meta: { title: '语言管理', icon: 'Setting', permission: 'LANGUAGE.LIST' }
+      },
+      {
+        path: 'blog',
+        name: 'Blog',
+        component: () => import('@/views/blog/index.vue'),
+        meta: { title: '博客管理', icon: 'EditPen', permission: 'BLOG.LIST' }
       }
     ]
   },
