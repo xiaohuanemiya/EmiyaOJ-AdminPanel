@@ -55,7 +55,7 @@
 
       <!-- 分页 -->
       <el-pagination
-        v-model:current-page="queryParams.pageNo"
+        v-model:current-page="queryParams.pageNum"
         v-model:page-size="queryParams.pageSize"
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
@@ -136,7 +136,7 @@ import {
   assignRoles
 } from '@/api/user'
 import { getAllRoles, getRolesByUserId } from '@/api/role'
-import type { UserVO, UserSaveDTO, PageDTO, PageVO, RoleVO } from '@/types/api'
+import type { UserVO, UserSaveDTO, UserPageDTO, PageVO, RoleVO } from '@/types/api'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -150,8 +150,8 @@ const allRoles = ref<RoleVO[]>([])
 const selectedRoleIds = ref<string[]>([])
 const currentUserId = ref<string>("")
 
-const queryParams = reactive<PageDTO>({
-  pageNo: 1,
+const queryParams = reactive<UserPageDTO>({
+  pageNum: 1,
   pageSize: 10
 })
 
@@ -227,7 +227,7 @@ const handleEdit = (row: UserVO) => {
 }
 
 // 删除
-const handleDelete = async (id: number) => {
+const handleDelete = async (id: string) => {
   try {
     await ElMessageBox.confirm('确认删除该用户吗？', '提示', { type: 'warning' })
     await deleteUser(id)

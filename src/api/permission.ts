@@ -7,31 +7,31 @@ import type {
 } from '@/types/api'
 
 /**
- * 查询权限列表
+ * 查询权限列表 (POST /permission/list)
  */
-export function getPermissionList(params?: PermissionQueryDTO) {
+export function getPermissionList(data?: PermissionQueryDTO) {
   return request<ResponseResult<PermissionVO[]>>({
     url: '/permission/list',
-    method: 'get',
-    params
+    method: 'post',
+    data: data || {}
   })
 }
 
 /**
- * 查询权限树
+ * 查询权限树 (POST /permission/tree)
  */
-export function getPermissionTree(params?: PermissionQueryDTO) {
+export function getPermissionTree(data?: PermissionQueryDTO) {
   return request<ResponseResult<PermissionVO[]>>({
     url: '/permission/tree',
-    method: 'get',
-    params
+    method: 'post',
+    data: data || {}
   })
 }
 
 /**
- * 根据ID查询权限
+ * 根据ID查询权限详情 (GET /permission/{id})
  */
-export function getPermissionById(id: number) {
+export function getPermissionById(id: string) {
   return request<ResponseResult<PermissionVO>>({
     url: `/permission/${id}`,
     method: 'get'
@@ -39,10 +39,10 @@ export function getPermissionById(id: number) {
 }
 
 /**
- * 新增权限
+ * 新增权限 (POST /permission)
  */
 export function addPermission(data: PermissionSaveDTO) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: '/permission',
     method: 'post',
     data
@@ -50,10 +50,10 @@ export function addPermission(data: PermissionSaveDTO) {
 }
 
 /**
- * 修改权限
+ * 修改权限 (PUT /permission)
  */
 export function updatePermission(data: PermissionSaveDTO) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: '/permission',
     method: 'put',
     data
@@ -61,20 +61,20 @@ export function updatePermission(data: PermissionSaveDTO) {
 }
 
 /**
- * 删除权限
+ * 删除权限 (DELETE /permission/{id})
  */
-export function deletePermission(id: number) {
-  return request<ResponseResult<void>>({
+export function deletePermission(id: string) {
+  return request<ResponseResult<string>>({
     url: `/permission/${id}`,
     method: 'delete'
   })
 }
 
 /**
- * 批量删除权限
+ * 批量删除权限 (DELETE /permission/batch)
  */
 export function batchDeletePermissions(ids: number[]) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: '/permission/batch',
     method: 'delete',
     data: ids
@@ -82,10 +82,10 @@ export function batchDeletePermissions(ids: number[]) {
 }
 
 /**
- * 修改权限状态
+ * 修改权限状态 (PUT /permission/{id}/status)
  */
 export function updatePermissionStatus(id: string, status: number) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: `/permission/${id}/status`,
     method: 'put',
     params: { status }
@@ -93,32 +93,12 @@ export function updatePermissionStatus(id: string, status: number) {
 }
 
 /**
- * 检查权限编码是否存在
+ * 检查权限编码是否存在 (GET /permission/exists)
  */
 export function checkPermissionCodeExists(permissionCode: string, excludeId?: number) {
   return request<ResponseResult<boolean>>({
     url: '/permission/exists',
     method: 'get',
     params: { permissionCode, excludeId }
-  })
-}
-
-/**
- * 根据角色ID查询权限列表
- */
-export function getPermissionsByRoleId(roleId: number) {
-  return request<ResponseResult<PermissionVO[]>>({
-    url: `/permission/role/${roleId}`,
-    method: 'get'
-  })
-}
-
-/**
- * 根据用户ID查询权限列表
- */
-export function getPermissionsByUserId(userId: number) {
-  return request<ResponseResult<PermissionVO[]>>({
-    url: `/permission/user/${userId}`,
-    method: 'get'
   })
 }

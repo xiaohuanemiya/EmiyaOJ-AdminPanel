@@ -202,7 +202,7 @@ const handleEdit = (row: PermissionVO) => {
   dialogVisible.value = true
 }
 
-const handleDelete = async (id: number) => {
+const handleDelete = async (id: string) => {
   try {
     await ElMessageBox.confirm('确认删除该权限吗？删除后其子权限也会被删除！', '提示', { type: 'warning' })
     await deletePermission(id)

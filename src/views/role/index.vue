@@ -123,7 +123,7 @@ import {
   getRolePermissionIds
 } from '@/api/role'
 import { getPermissionTree } from '@/api/permission'
-import type { RoleVO, RoleSaveDTO, RoleQueryDTO, PermissionVO, Page } from '@/types/api'
+import type { RoleVO, RoleSaveDTO, RoleQueryDTO, PermissionVO, PageVO } from '@/types/api'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -167,8 +167,8 @@ const fetchData = async () => {
   loading.value = true
   try {
     const res = await getRolePage(queryParams)
-    const pageData = res.data as unknown as Page<RoleVO>
-    tableData.value = pageData.records
+    const pageData = res.data as unknown as PageVO<RoleVO>
+    tableData.value = pageData.list
     total.value = pageData.total
   } catch (error) {
     console.error('查询失败:', error)
@@ -203,7 +203,7 @@ const handleEdit = (row: RoleVO) => {
   dialogVisible.value = true
 }
 
-const handleDelete = async (id: number) => {
+const handleDelete = async (id: string) => {
   try {
     await ElMessageBox.confirm('确认删除该角色吗？', '提示', { type: 'warning' })
     await deleteRole(id)

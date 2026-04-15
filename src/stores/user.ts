@@ -40,15 +40,23 @@ export const useUserStore = defineStore('user', {
         localStorage.setItem('token', token)
         localStorage.setItem('userInfo', JSON.stringify(loginData))
         
-        // 从 JWT 解析权限信息
+        // 从 JWT 解析权限信息和用户信息
         const jwtData = parseJwtToken(token)
         if (jwtData) {
-          // 直接从JWT获取权限列表
+          // 直接从JWT载荷获取权限列表
           this.permissions = jwtData.permissions || []
           localStorage.setItem('permissions', JSON.stringify(this.permissions))
           
+          // 用JWT中的用户信息补充/覆盖userInfo
+          this.userInfo = {
+            ...loginData,
+            id: String(jwtData.userId),
+            username: jwtData.username
+          }
+          localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
+          
           console.log('从JWT解析的权限:', this.permissions)
-          console.log('用户信息:', jwtData.user)
+          console.log('用户信息:', { userId: jwtData.userId, username: jwtData.username })
         }
         // 弃用
         // 获取菜单权限树（如果后端提供
@@ -113,6 +121,17 @@ export const useUserStore = defineStore('user', {
           if (jwtData) {
             this.permissions = jwtData.permissions || []
             localStorage.setItem('permissions', JSON.stringify(this.permissions))
+            
+            // 同时恢复用户信息
+            if (!userInfo) {
+              this.userInfo = {
+                id: String(jwtData.userId),
+                username: jwtData.username,
+                nickname: jwtData.username,
+                token: token
+              }
+              localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
+            }
           }
         }
       }

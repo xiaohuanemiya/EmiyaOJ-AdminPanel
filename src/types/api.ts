@@ -2,7 +2,7 @@
 
 export interface ResponseResult<T = any> {
   code: number;
-  msg: string;
+  message: string;
   data: T;
 }
 
@@ -15,16 +15,9 @@ export interface PageDTO {
 
 export interface PageVO<T> {
   total: number;
-  pages: number;
   list: T[];
-}
-
-export interface Page<T> {
-  records: T[];
-  total: number;
-  size: number;
-  current: number;
-  pages: number;
+  pageNum?: number;
+  pageSize?: number;
 }
 
 // ========== 用户相关 ==========
@@ -37,12 +30,13 @@ export interface UserLoginDTO {
 export interface UserLoginVO {
   id: string;
   username: string;
-  name: string;
+  nickname: string;
   token: string;
 }
 
-export interface UserPageDTO extends PageDTO {
-  // 可扩展查询条件
+export interface UserPageDTO {
+  pageNum?: number;
+  pageSize?: number;
 }
 
 export interface UserSaveDTO {
@@ -54,6 +48,7 @@ export interface UserSaveDTO {
   phone?: string;
   avatar?: string;
   status?: number;
+  roleIds?: number[];
 }
 
 export interface UserVO {
@@ -67,6 +62,8 @@ export interface UserVO {
   statusDesc: string;
   createTime: string;
   updateTime: string;
+  roles?: RoleVO[];
+  permissions?: PermissionVO[];
 }
 
 // ========== 角色相关 ==========
@@ -99,6 +96,7 @@ export interface RoleVO {
   statusDesc: string;
   createTime: string;
   updateTime: string;
+  permissions?: PermissionVO[];
 }
 
 // ========== 权限相关 ==========
@@ -108,12 +106,12 @@ export interface PermissionQueryDTO {
   permissionName?: string;
   permissionType?: number;
   status?: number;
-  parentId?: string;
+  parentId?: number;
 }
 
 export interface PermissionSaveDTO {
   id?: string;
-  parentId?: string;
+  parentId?: number;
   permissionCode: string;
   permissionName: string;
   permissionType: number;
@@ -156,16 +154,17 @@ export interface LanguageVO {
   timeLimitMultiplier: number;
   memoryLimitMultiplier: number;
   status: number;
-  createTime: string;
-  updateTime: string;
 }
 
 // ========== 题目相关 ==========
 
-export interface ProblemQueryDTO extends PageDTO {
+export interface ProblemQueryDTO {
+  pageNum?: number;
+  pageSize?: number;
+  title?: string;
   difficulty?: number;
+  tagId?: number;
   status?: number;
-  keyword?: string;
 }
 
 export interface ProblemSaveDTO {
@@ -183,6 +182,7 @@ export interface ProblemSaveDTO {
   stackLimit?: number;
   source?: string;
   status?: number;
+  tagIds?: number[];
 }
 
 export interface ProblemVO {
@@ -195,15 +195,18 @@ export interface ProblemVO {
   sampleOutput: string;
   hint: string;
   difficulty: number;
+  difficultyDesc: string;
   timeLimit: number;
   memoryLimit: number;
   stackLimit: number;
   source: string;
-  status: number;
+  authorId: number;
   acceptCount: number;
   submitCount: number;
+  status: number;
   createTime: string;
   updateTime: string;
+  tags: string[];
 }
 
 // ========== 测试用例相关 ==========
@@ -226,7 +229,6 @@ export interface TestCaseVO {
   isSample: number;
   score: number;
   sortOrder: number;
-  createTime: string;
 }
 
 // ========== 枚举类型 ==========
@@ -271,7 +273,6 @@ export enum LanguageStatus {
 // ========== 博客相关 ==========
 
 export interface BlogQueryDTO {
-  userId?: number;
   title?: string;
   createTime?: string;
   pageNo: number;
@@ -279,14 +280,12 @@ export interface BlogQueryDTO {
 }
 
 export interface BlogAddDTO {
-  userId?: number;
   title: string;
   content: string;
   tagIds: number[];
 }
 
 export interface BlogUpdateDTO {
-  userId?: number;
   title: string;
   content: string;
 }
@@ -298,7 +297,6 @@ export interface BlogVO {
   content: string;
   createTime: string;
   updateTime: string;
-  // 博客关联的标签列表（如果后端返回）
   tags?: BlogTagVO[];
 }
 
@@ -319,7 +317,6 @@ export interface UserBlogVO {
 // ========== 评论相关 ==========
 
 export interface CommentQueryDTO {
-  userId?: number;
   blogId?: number;
   fromDay?: string;
   toDay?: string;
@@ -332,10 +329,9 @@ export interface CommentSaveDTO {
 export interface CommentVO {
   id: string;
   userId: string;
-  blogId?: string;
-  content?: string;
   username: string;
   nickname: string;
+  content: string;
   createTime: string;
   updateTime: string;
 }
