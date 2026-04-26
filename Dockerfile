@@ -14,6 +14,9 @@ RUN npm run build
 # Production stage
 FROM nginx:alpine
 
+# 替换默认的 nginx 配置文件
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 # 复制构建好的文件到 Nginx 的默认静态资源目录
 COPY --from=builder /app/dist /usr/share/nginx/html
 
