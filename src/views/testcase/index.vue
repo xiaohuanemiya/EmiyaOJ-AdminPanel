@@ -64,7 +64,6 @@
             <el-text class="data-preview" truncated>{{ row.output }}</el-text>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180" />
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" @click="handleView(row)">
@@ -137,7 +136,6 @@
             {{ currentTestCase?.isSample === 1 ? '是' : '否' }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间" :span="2">{{ currentTestCase?.createTime }}</el-descriptions-item>
       </el-descriptions>
       <div class="data-section">
         <div class="data-block">

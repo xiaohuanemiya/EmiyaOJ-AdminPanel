@@ -29,8 +29,19 @@ export function getTestCaseById(id: number) {
  * 新增测试用例 (POST /test-case)
  */
 export function addTestCase(data: TestCaseSaveDTO) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<TestCaseVO>>({
     url: '/test-case',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 批量新增测试用例 (POST /test-case/batch/{problemId})
+ */
+export function batchAddTestCases(problemId: number, data: Omit<TestCaseSaveDTO, 'problemId'>[]) {
+  return request<ResponseResult<TestCaseVO[]>>({
+    url: `/test-case/batch/${problemId}`,
     method: 'post',
     data
   })

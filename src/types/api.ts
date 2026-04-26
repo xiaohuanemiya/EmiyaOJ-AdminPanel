@@ -142,6 +142,20 @@ export interface PermissionVO {
 
 // ========== 语言相关 ==========
 
+export interface LanguageSaveDTO {
+  id?: number;
+  name: string;
+  version?: string;
+  compileCommand?: string;
+  executeCommand?: string;
+  sourceFileExt?: string;
+  executableExt?: string;
+  isCompiled?: number;
+  timeLimitMultiplier?: number;
+  memoryLimitMultiplier?: number;
+  status?: number;
+}
+
 export interface LanguageVO {
   id: number;
   name: string;
