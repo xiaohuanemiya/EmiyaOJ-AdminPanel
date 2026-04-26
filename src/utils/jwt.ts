@@ -9,6 +9,10 @@ interface JwtPayload {
   username: string
   iat: number
   exp: number
+  enabled?: boolean
+  accountNonExpired?: boolean
+  accountNonLocked?: boolean
+  user?: any
 }
 
 /**
