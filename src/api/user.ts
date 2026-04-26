@@ -1,16 +1,16 @@
 import request from '@/utils/request'
 import type { 
   ResponseResult, 
-  PageDTO, 
   PageVO, 
   UserVO, 
-  UserSaveDTO 
+  UserSaveDTO,
+  UserPageDTO
 } from '@/types/api'
 
 /**
- * 分页查询用户列表
+ * 分页查询用户列表 (POST /user/page)
  */
-export function getUserPage(data: PageDTO) {
+export function getUserPage(data: UserPageDTO) {
   return request<ResponseResult<PageVO<UserVO>>>({
     url: '/user/page',
     method: 'post',
@@ -19,9 +19,9 @@ export function getUserPage(data: PageDTO) {
 }
 
 /**
- * 根据ID查询用户
+ * 根据ID查询用户详情 (GET /user/{id})
  */
-export function getUserById(id: number) {
+export function getUserById(id: string) {
   return request<ResponseResult<UserVO>>({
     url: `/user/${id}`,
     method: 'get'
@@ -29,10 +29,10 @@ export function getUserById(id: number) {
 }
 
 /**
- * 新增用户
+ * 新增用户 (POST /user)
  */
 export function addUser(data: UserSaveDTO) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: '/user',
     method: 'post',
     data
@@ -40,10 +40,10 @@ export function addUser(data: UserSaveDTO) {
 }
 
 /**
- * 修改用户
+ * 修改用户 (PUT /user)
  */
 export function updateUser(data: UserSaveDTO) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: '/user',
     method: 'put',
     data
@@ -51,20 +51,20 @@ export function updateUser(data: UserSaveDTO) {
 }
 
 /**
- * 删除用户
+ * 删除用户 (DELETE /user/{id})
  */
-export function deleteUser(id: number) {
-  return request<ResponseResult<void>>({
+export function deleteUser(id: string) {
+  return request<ResponseResult<string>>({
     url: `/user/${id}`,
     method: 'delete'
   })
 }
 
 /**
- * 批量删除用户
+ * 批量删除用户 (DELETE /user/batch)
  */
 export function batchDeleteUsers(ids: string[]) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: '/user/batch',
     method: 'delete',
     data: ids
@@ -72,21 +72,20 @@ export function batchDeleteUsers(ids: string[]) {
 }
 
 /**
- * 重置用户密码
+ * 重置用户密码 (PUT /user/{id}/reset-password)
  */
-export function resetPassword(id: number, newPassword: string) {
-  return request<ResponseResult<void>>({
+export function resetPassword(id: string) {
+  return request<ResponseResult<string>>({
     url: `/user/${id}/reset-password`,
-    method: 'put',
-    params: { newPassword }
+    method: 'put'
   })
 }
 
 /**
- * 修改用户状态
+ * 修改用户状态 (PUT /user/{id}/status)
  */
 export function updateUserStatus(id: string, status: number) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: `/user/${id}/status`,
     method: 'put',
     params: { status }
@@ -94,44 +93,12 @@ export function updateUserStatus(id: string, status: number) {
 }
 
 /**
- * 为用户分配角色
+ * 为用户分配角色 (PUT /user/{id}/roles)
  */
 export function assignRoles(id: string, roleIds: string[]) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: `/user/${id}/roles`,
     method: 'put',
     data: roleIds
-  })
-}
-
-/**
- * 获取用户权限列表
- */
-export function getUserPermissions(id: number) {
-  return request<ResponseResult<string[]>>({
-    url: `/user/${id}/permissions`,
-    method: 'get'
-  })
-}
-
-/**
- * 检查用户是否拥有指定权限
- */
-export function hasPermission(id: number, permissionCode: string) {
-  return request<ResponseResult<boolean>>({
-    url: `/user/${id}/has-permission`,
-    method: 'get',
-    params: { permissionCode }
-  })
-}
-
-/**
- * 检查用户是否拥有指定角色
- */
-export function hasRole(id: number, roleCode: string) {
-  return request<ResponseResult<boolean>>({
-    url: `/user/${id}/has-role`,
-    method: 'get',
-    params: { roleCode }
   })
 }

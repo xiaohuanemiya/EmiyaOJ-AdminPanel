@@ -8,18 +8,18 @@ import type {
 } from '@/types/api'
 
 /**
- * 分页查询题目列表
+ * 分页查询题目列表 (GET /problem/list)
  */
 export function getProblemPage(params: ProblemQueryDTO) {
   return request<ResponseResult<PageVO<ProblemVO>>>({
-    url: '/problem/page',
+    url: '/problem/list',
     method: 'get',
     params
   })
 }
 
 /**
- * 根据ID查询题目
+ * 根据ID查询题目详情 (GET /problem/{id})
  */
 export function getProblemById(id: number) {
   return request<ResponseResult<ProblemVO>>({
@@ -29,10 +29,10 @@ export function getProblemById(id: number) {
 }
 
 /**
- * 新增题目
+ * 新增题目 (POST /problem)
  */
 export function addProblem(data: ProblemSaveDTO) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<boolean>>({
     url: '/problem',
     method: 'post',
     data
@@ -40,10 +40,10 @@ export function addProblem(data: ProblemSaveDTO) {
 }
 
 /**
- * 修改题目
+ * 修改题目 (PUT /problem)
  */
 export function updateProblem(data: ProblemSaveDTO) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<boolean>>({
     url: '/problem',
     method: 'put',
     data
@@ -51,33 +51,11 @@ export function updateProblem(data: ProblemSaveDTO) {
 }
 
 /**
- * 删除题目
+ * 删除题目 (DELETE /problem/{id})
  */
 export function deleteProblem(id: number) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<boolean>>({
     url: `/problem/${id}`,
     method: 'delete'
-  })
-}
-
-/**
- * 批量删除题目
- */
-export function batchDeleteProblems(ids: number[]) {
-  return request<ResponseResult<void>>({
-    url: '/problem/batch',
-    method: 'delete',
-    data: ids
-  })
-}
-
-/**
- * 修改题目状态
- */
-export function updateProblemStatus(id: number, status: number) {
-  return request<ResponseResult<void>>({
-    url: `/problem/${id}/status`,
-    method: 'put',
-    params: { status }
   })
 }

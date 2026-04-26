@@ -5,7 +5,7 @@
       <div class="toolbar">
         <div class="toolbar-left">
           <el-input
-            v-model="queryParams.keyword"
+            v-model="queryParams.title"
             placeholder="请输入题目标题"
             clearable
             style="width: 200px; margin-right: 10px;"
@@ -44,10 +44,6 @@
             <el-icon><Plus /></el-icon>
             新增题目
           </el-button>
-          <el-button type="danger" v-permission="'PROBLEM.DELETE'" :disabled="selectedIds.length === 0" @click="handleBatchDelete">
-            <el-icon><Delete /></el-icon>
-            批量删除
-          </el-button>
         </div>
       </div>
 
@@ -55,10 +51,8 @@
       <el-table
         v-loading="loading"
         :data="tableData"
-        @selection-change="handleSelectionChange"
         style="margin-top: 20px;"
       >
-        <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="title" label="题目标题" min-width="200" show-overflow-tooltip />
         <el-table-column label="难度" width="100">
@@ -95,7 +89,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" v-permission="'PROBLEM.EDIT'" @click="handleEdit(row)">
               编辑
@@ -112,7 +106,7 @@
 
       <!-- 分页 -->
       <el-pagination
-        v-model:current-page="queryParams.pageNo"
+        v-model:current-page="queryParams.pageNum"
         v-model:page-size="queryParams.pageSize"
         :total="total"
         :page-sizes="[10, 20, 50, 100]"
@@ -327,7 +321,6 @@
             {{ currentTestCase?.isSample === 1 ? '是' : '否' }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间" :span="2">{{ currentTestCase?.createTime }}</el-descriptions-item>
       </el-descriptions>
       <div class="data-section">
         <div class="data-block">
@@ -353,9 +346,7 @@ import {
   getProblemPage,
   addProblem,
   updateProblem,
-  deleteProblem,
-  batchDeleteProblems,
-  updateProblemStatus
+  deleteProblem
 } from '@/api/problem'
 import {
   getTestCasesByProblemId,
@@ -372,14 +363,13 @@ const dialogVisible = ref(false)
 const formRef = ref<FormInstance>()
 const tableData = ref<ProblemVO[]>([])
 const total = ref(0)
-const selectedIds = ref<number[]>([])
 
 const queryParams = reactive<ProblemQueryDTO>({
-  pageNo: 1,
+  pageNum: 1,
   pageSize: 10,
   difficulty: undefined,
   status: undefined,
-  keyword: ''
+  title: ''
 })
 
 const formData = reactive<ProblemSaveDTO>({
@@ -490,17 +480,17 @@ const fetchData = async () => {
 
 // 搜索
 const handleSearch = () => {
-  queryParams.pageNo = 1
+  queryParams.pageNum = 1
   fetchData()
 }
 
 // 重置
 const handleReset = () => {
-  queryParams.pageNo = 1
+  queryParams.pageNum = 1
   queryParams.pageSize = 10
   queryParams.difficulty = undefined
   queryParams.status = undefined
-  queryParams.keyword = ''
+  queryParams.title = ''
   fetchData()
 }
 
@@ -546,26 +536,11 @@ const handleDelete = async (id: number) => {
   }
 }
 
-// 批量删除
-const handleBatchDelete = async () => {
-  try {
-    await ElMessageBox.confirm(`确认删除选中的 ${selectedIds.value.length} 个题目吗？`, '提示', { type: 'warning' })
-    await batchDeleteProblems(selectedIds.value)
-    ElMessage.success('删除成功')
-    selectedIds.value = []
-    fetchData()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('批量删除失败:', error)
-    }
-  }
-}
-
-// 修改状态
+// 修改状态（通过updateProblem修改）
 const handleStatusChange = async (row: ProblemVO): Promise<boolean> => {
   const newStatus = row.status === 1 ? 0 : 1
   try {
-    await updateProblemStatus(row.id, newStatus)
+    await updateProblem({ id: row.id, title: row.title, description: row.description, timeLimit: row.timeLimit, memoryLimit: row.memoryLimit, status: newStatus })
     ElMessage.success('状态修改成功')
     return true
   } catch (error) {
@@ -725,11 +700,6 @@ const handleSubmit = async () => {
       }
     }
   })
-}
-
-// 选择变化
-const handleSelectionChange = (selection: ProblemVO[]) => {
-  selectedIds.value = selection.map(item => item.id)
 }
 
 // 重置表单

@@ -2,7 +2,7 @@ import request from '@/utils/request'
 import type { ResponseResult, UserLoginDTO, UserLoginVO } from '@/types/api'
 
 /**
- * 用户登录
+ * 用户登录 (POST /auth/login)
  */
 export function login(data: UserLoginDTO) {
   return request<ResponseResult<UserLoginVO>>({
@@ -13,10 +13,10 @@ export function login(data: UserLoginDTO) {
 }
 
 /**
- * 退出登录
+ * 退出登录 (POST /auth/logout)
  */
 export function logout() {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: '/auth/logout',
     method: 'post'
   })

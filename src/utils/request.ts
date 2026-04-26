@@ -45,7 +45,7 @@ service.interceptors.response.use(
     
     // 如果状态码不是 200，判断为错误
     if (res.code !== 200) {
-      ElMessage.error(res.msg || '请求失败')
+      ElMessage.error(res.message || '请求失败')
       
       // 401: 未授权，跳转到登录页
       if (res.code === 401) {
@@ -54,7 +54,7 @@ service.interceptors.response.use(
         router.push('/login')
       }
       
-      return Promise.reject(new Error(res.msg || '请求失败'))
+      return Promise.reject(new Error(res.message || '请求失败'))
     }
     
     return res
@@ -80,7 +80,7 @@ service.interceptors.response.use(
           ElMessage.error('服务器错误')
           break
         default:
-          ElMessage.error(error.response.data.msg || '请求失败')
+          ElMessage.error(error.response.data.message || '请求失败')
       }
     } else {
       ElMessage.error('网络错误，请检查网络连接')

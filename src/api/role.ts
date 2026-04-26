@@ -1,25 +1,25 @@
 import request from '@/utils/request'
 import type { 
   ResponseResult, 
-  Page,
+  PageVO,
   RoleQueryDTO,
   RoleVO, 
   RoleSaveDTO 
 } from '@/types/api'
 
 /**
- * 分页查询角色列表
+ * 分页查询角色列表 (POST /role/page)
  */
-export function getRolePage(params: RoleQueryDTO) {
-  return request<ResponseResult<Page<RoleVO>>>({
+export function getRolePage(data: RoleQueryDTO) {
+  return request<ResponseResult<PageVO<RoleVO>>>({
     url: '/role/page',
-    method: 'get',
-    params
+    method: 'post',
+    data
   })
 }
 
 /**
- * 查询所有角色列表
+ * 查询所有角色列表 (GET /role/list)
  */
 export function getAllRoles() {
   return request<ResponseResult<RoleVO[]>>({
@@ -29,9 +29,9 @@ export function getAllRoles() {
 }
 
 /**
- * 根据ID查询角色
+ * 根据ID查询角色详情 (GET /role/{id})
  */
-export function getRoleById(id: number) {
+export function getRoleById(id: string) {
   return request<ResponseResult<RoleVO>>({
     url: `/role/${id}`,
     method: 'get'
@@ -39,10 +39,10 @@ export function getRoleById(id: number) {
 }
 
 /**
- * 新增角色
+ * 新增角色 (POST /role)
  */
 export function addRole(data: RoleSaveDTO) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: '/role',
     method: 'post',
     data
@@ -50,10 +50,10 @@ export function addRole(data: RoleSaveDTO) {
 }
 
 /**
- * 修改角色
+ * 修改角色 (PUT /role)
  */
 export function updateRole(data: RoleSaveDTO) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: '/role',
     method: 'put',
     data
@@ -61,20 +61,20 @@ export function updateRole(data: RoleSaveDTO) {
 }
 
 /**
- * 删除角色
+ * 删除角色 (DELETE /role/{id})
  */
-export function deleteRole(id: number) {
-  return request<ResponseResult<void>>({
+export function deleteRole(id: string) {
+  return request<ResponseResult<string>>({
     url: `/role/${id}`,
     method: 'delete'
   })
 }
 
 /**
- * 批量删除角色
+ * 批量删除角色 (DELETE /role/batch)
  */
 export function batchDeleteRoles(ids: string[]) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: '/role/batch',
     method: 'delete',
     data: ids
@@ -82,10 +82,10 @@ export function batchDeleteRoles(ids: string[]) {
 }
 
 /**
- * 修改角色状态
+ * 修改角色状态 (PUT /role/{id}/status)
  */
 export function updateRoleStatus(id: string, status: number) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: `/role/${id}/status`,
     method: 'put',
     params: { status }
@@ -93,10 +93,10 @@ export function updateRoleStatus(id: string, status: number) {
 }
 
 /**
- * 为角色分配权限
+ * 为角色分配权限 (PUT /role/{id}/permissions)
  */
 export function assignPermissions(id: string, permissionIds: number[]) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<string>>({
     url: `/role/${id}/permissions`,
     method: 'put',
     data: permissionIds
@@ -104,7 +104,7 @@ export function assignPermissions(id: string, permissionIds: number[]) {
 }
 
 /**
- * 获取角色权限列表
+ * 获取角色已分配的权限ID列表 (GET /role/{id}/permissions)
  */
 export function getRolePermissionIds(id: string) {
   return request<ResponseResult<string[]>>({
@@ -114,7 +114,7 @@ export function getRolePermissionIds(id: string) {
 }
 
 /**
- * 检查角色编码是否存在
+ * 检查角色编码是否存在 (GET /role/exists)
  */
 export function checkRoleCodeExists(roleCode: string, excludeId?: number) {
   return request<ResponseResult<boolean>>({
@@ -125,7 +125,7 @@ export function checkRoleCodeExists(roleCode: string, excludeId?: number) {
 }
 
 /**
- * 根据用户ID查询角色列表
+ * 根据用户ID查询角色列表 (GET /role/user/{userId})
  */
 export function getRolesByUserId(userId: string) {
   return request<ResponseResult<RoleVO[]>>({
