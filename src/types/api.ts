@@ -148,13 +148,21 @@ export interface LanguageSaveDTO {
   id?: number;
   name: string;
   version: string;
-  compileCommand?: string;
-  executeCommand: string;
+  languageVersion: string;
+  compileFileName?: string;
   sourceFileExt: string;
-  executableExt?: string;
+  executableFileName?: string;
+  compiledFileNames?: string | null;
+  compileCommand?: string | null;
+  runCommand: string;
+  envVars?: string | null;
   isCompiled?: number;
   timeLimitMultiplier?: number;
   memoryLimitMultiplier?: number;
+  compileTimeLimit?: number;
+  compileMemoryLimit?: number;
+  compileProcLimit?: number;
+  runProcLimit?: number;
   status?: number;
 }
 
@@ -162,13 +170,21 @@ export interface LanguageVO {
   id: number;
   name: string;
   version: string;
-  compileCommand: string;
-  executeCommand: string;
+  languageVersion: string;
+  compileFileName: string;
   sourceFileExt: string;
-  executableExt: string;
+  executableFileName: string;
+  compiledFileNames: string | null;
+  compileCommand: string | null;
+  runCommand: string;
+  envVars: string | null;
   isCompiled: number;
   timeLimitMultiplier: number;
   memoryLimitMultiplier: number;
+  compileTimeLimit: number;
+  compileMemoryLimit: number;
+  compileProcLimit: number;
+  runProcLimit: number;
   status: number;
 }
 

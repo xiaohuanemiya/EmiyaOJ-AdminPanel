@@ -6,31 +6,11 @@ import type {
 } from '@/types/api'
 
 /**
- * 查询启用的编程语言列表（前台） (GET /language/list)
- */
-export function getLanguageList() {
-  return request<ResponseResult<LanguageVO[]>>({
-    url: '/language/list',
-    method: 'get'
-  })
-}
-
-/**
  * 管理端查询全部编程语言（含禁用） (GET /language/admin/list)
  */
 export function getLanguageAdminList() {
   return request<ResponseResult<LanguageVO[]>>({
     url: '/language/admin/list',
-    method: 'get'
-  })
-}
-
-/**
- * 根据ID查询语言详情（供Feign调用，仅启用） (GET /language/{id})
- */
-export function getLanguageById(id: number) {
-  return request<ResponseResult<LanguageVO>>({
-    url: `/language/${id}`,
     method: 'get'
   })
 }
