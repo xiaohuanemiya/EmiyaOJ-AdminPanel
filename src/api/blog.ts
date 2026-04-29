@@ -8,6 +8,7 @@ import type {
   BlogAddDTO,
   BlogUpdateDTO,
   BlogTagVO,
+  BlogTagSaveDTO,
   CommentVO,
   CommentQueryDTO,
   CommentSaveDTO,
@@ -40,7 +41,7 @@ export function getBlogPage(data: BlogQueryDTO) {
 /**
  * 根据ID查询博客 (GET /blog/{bid})
  */
-export function getBlogById(id: number) {
+export function getBlogById(id: string | number) {
   return request<ResponseResult<BlogVO>>({
     url: `/blog/${id}`,
     method: 'get'
@@ -61,7 +62,7 @@ export function addBlog(data: BlogAddDTO) {
 /**
  * 修改博客 (PUT /blog/{bid}) - 注意：修改博客不支持更新标签
  */
-export function updateBlog(id: number, data: BlogUpdateDTO) {
+export function updateBlog(id: string | number, data: BlogUpdateDTO) {
   return request<ResponseResult<void>>({
     url: `/blog/${id}`,
     method: 'put',
@@ -72,7 +73,7 @@ export function updateBlog(id: number, data: BlogUpdateDTO) {
 /**
  * 删除博客 (DELETE /blog/{bid})
  */
-export function deleteBlog(id: number) {
+export function deleteBlog(id: string | number) {
   return request<ResponseResult<void>>({
     url: `/blog/${id}`,
     method: 'delete'
@@ -84,7 +85,7 @@ export function deleteBlog(id: number) {
 /**
  * 分页查询博客评论 (POST /blog/{bid}/comments/query)
  */
-export function getBlogComments(blogId: number, data: PageDTO) {
+export function getBlogComments(blogId: string | number, data: PageDTO) {
   return request<ResponseResult<PageVO<CommentVO>>>({
     url: `/blog/${blogId}/comments/query`,
     method: 'post',
@@ -95,7 +96,7 @@ export function getBlogComments(blogId: number, data: PageDTO) {
 /**
  * 发表评论 (POST /blog/{bid}/comments)
  */
-export function addComment(blogId: number, data: CommentSaveDTO) {
+export function addComment(blogId: string | number, data: CommentSaveDTO) {
   return request<ResponseResult<void>>({
     url: `/blog/${blogId}/comments`,
     method: 'post',
@@ -117,7 +118,7 @@ export function queryComments(data: CommentQueryDTO) {
 /**
  * 获取指定评论 (GET /blog/comments/{cid})
  */
-export function getCommentById(cid: number) {
+export function getCommentById(cid: string | number) {
   return request<ResponseResult<CommentVO>>({
     url: `/blog/comments/${cid}`,
     method: 'get'
@@ -127,7 +128,7 @@ export function getCommentById(cid: number) {
 /**
  * 删除评论 (DELETE /blog/comments/{cid})
  */
-export function deleteComment(cid: number) {
+export function deleteComment(cid: string | number) {
   return request<ResponseResult<void>>({
     url: `/blog/comments/${cid}`,
     method: 'delete'
@@ -139,7 +140,7 @@ export function deleteComment(cid: number) {
 /**
  * 收藏博客 (POST /blog/{bid}/star)
  */
-export function starBlog(blogId: number) {
+export function starBlog(blogId: string | number) {
   return request<ResponseResult<void>>({
     url: `/blog/${blogId}/star`,
     method: 'post'
@@ -149,7 +150,7 @@ export function starBlog(blogId: number) {
 /**
  * 取消收藏博客 (DELETE /blog/{bid}/star)
  */
-export function unstarBlog(blogId: number) {
+export function unstarBlog(blogId: string | number) {
   return request<ResponseResult<void>>({
     url: `/blog/${blogId}/star`,
     method: 'delete'
@@ -161,7 +162,7 @@ export function unstarBlog(blogId: number) {
 /**
  * 查询用户博客信息 (GET /blog/user/{uid})
  */
-export function getUserBlogInfo(uid: number) {
+export function getUserBlogInfo(uid: string | number) {
   return request<ResponseResult<UserBlogVO>>({
     url: `/blog/user/${uid}`,
     method: 'get'
@@ -171,7 +172,7 @@ export function getUserBlogInfo(uid: number) {
 /**
  * 分页查询用户发表的博客 (POST /blog/user/{uid}/blogs/query)
  */
-export function getUserBlogs(uid: number, data: PageDTO) {
+export function getUserBlogs(uid: string | number, data: PageDTO) {
   return request<ResponseResult<PageVO<BlogVO>>>({
     url: `/blog/user/${uid}/blogs/query`,
     method: 'post',
@@ -182,7 +183,7 @@ export function getUserBlogs(uid: number, data: PageDTO) {
 /**
  * 分页查询用户收藏的博客 (POST /blog/user/{uid}/stars/query)
  */
-export function getUserStarredBlogs(uid: number, data: PageDTO) {
+export function getUserStarredBlogs(uid: string | number, data: PageDTO) {
   return request<ResponseResult<PageVO<BlogVO>>>({
     url: `/blog/user/${uid}/stars/query`,
     method: 'post',
@@ -199,5 +200,47 @@ export function getBlogTags() {
   return request<ResponseResult<BlogTagVO[]>>({
     url: '/blog/tags',
     method: 'get'
+  })
+}
+
+/**
+ * 获取博客标签详情 (GET /blog/tags/{tagId})
+ */
+export function getBlogTagById(tagId: string) {
+  return request<ResponseResult<BlogTagVO>>({
+    url: `/blog/tags/${tagId}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 新增博客标签 (POST /blog/tags)
+ */
+export function addBlogTag(data: BlogTagSaveDTO) {
+  return request<ResponseResult<BlogTagVO>>({
+    url: '/blog/tags',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 修改博客标签 (PUT /blog/tags/{tagId})
+ */
+export function updateBlogTag(tagId: string, data: BlogTagSaveDTO) {
+  return request<ResponseResult<BlogTagVO>>({
+    url: `/blog/tags/${tagId}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除博客标签 (DELETE /blog/tags/{tagId})
+ */
+export function deleteBlogTag(tagId: string) {
+  return request<ResponseResult<void>>({
+    url: `/blog/tags/${tagId}`,
+    method: 'delete'
   })
 }

@@ -3,6 +3,7 @@
 export interface ResponseResult<T = any> {
   code: number;
   message: string;
+  msg?: string;
   data: T;
 }
 
@@ -16,6 +17,7 @@ export interface PageDTO {
 export interface PageVO<T> {
   total: number;
   list: T[];
+  records?: T[];
   pageNum?: number;
   pageSize?: number;
 }
@@ -145,10 +147,10 @@ export interface PermissionVO {
 export interface LanguageSaveDTO {
   id?: number;
   name: string;
-  version?: string;
+  version: string;
   compileCommand?: string;
-  executeCommand?: string;
-  sourceFileExt?: string;
+  executeCommand: string;
+  sourceFileExt: string;
   executableExt?: string;
   isCompiled?: number;
   timeLimitMultiplier?: number;
@@ -296,7 +298,7 @@ export interface BlogQueryDTO {
 export interface BlogAddDTO {
   title: string;
   content: string;
-  tagIds: number[];
+  tagIds: string[];
 }
 
 export interface BlogUpdateDTO {
@@ -316,6 +318,11 @@ export interface BlogVO {
 
 export interface BlogTagVO {
   id: string;
+  name: string;
+  desc: string;
+}
+
+export interface BlogTagSaveDTO {
   name: string;
   desc: string;
 }

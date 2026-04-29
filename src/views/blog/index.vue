@@ -101,26 +101,38 @@
       <template #header>
         <div class="card-header">
           <span>博客标签</span>
-          <el-button type="primary" size="small" @click="fetchTags" :loading="tagsLoading">
-            <el-icon><Refresh /></el-icon>
-            刷新
-          </el-button>
+          <div class="tag-actions">
+            <el-button size="small" v-permission="'BLOG.TAG.LIST'" @click="fetchTags" :loading="tagsLoading">
+              <el-icon><Refresh /></el-icon>
+              刷新
+            </el-button>
+            <el-button type="primary" size="small" v-permission="'BLOG.TAG.ADD'" @click="handleAddTag">
+              <el-icon><Plus /></el-icon>
+              新增标签
+            </el-button>
+          </div>
         </div>
       </template>
-      <div class="tags-container" v-loading="tagsLoading">
-        <el-tag
-          v-for="tag in tagList"
-          :key="tag.id"
-          size="large"
-          style="margin: 5px;"
-        >
-          {{ tag.name }}
-          <el-tooltip v-if="tag.desc" :content="tag.desc" placement="top">
-            <el-icon style="margin-left: 4px; cursor: help;"><InfoFilled /></el-icon>
-          </el-tooltip>
-        </el-tag>
-        <el-empty v-if="tagList.length === 0" description="暂无标签" :image-size="60" />
-      </div>
+      <el-table
+        v-loading="tagsLoading"
+        :data="tagList"
+        style="width: 100%;"
+        empty-text="暂无标签"
+      >
+        <el-table-column prop="id" label="ID" width="160" show-overflow-tooltip />
+        <el-table-column prop="name" label="标签名称" width="180" show-overflow-tooltip />
+        <el-table-column prop="desc" label="标签描述" min-width="240" show-overflow-tooltip />
+        <el-table-column label="操作" width="160" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" v-permission="'BLOG.TAG.EDIT'" @click="handleEditTag(row)">
+              编辑
+            </el-button>
+            <el-button type="danger" size="small" v-permission="'BLOG.TAG.DELETE'" @click="handleDeleteTag(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </el-card>
 
     <!-- 新增/编辑博客对话框 -->
@@ -150,7 +162,7 @@
               v-for="tag in tagList"
               :key="tag.id"
               :label="tag.name"
-              :value="Number(tag.id)"
+              :value="tag.id"
             />
           </el-select>
           <div class="el-form-item__tip" style="color: #909399; font-size: 12px; margin-top: 4px;">
@@ -164,6 +176,34 @@
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 新增/编辑标签对话框 -->
+    <el-dialog
+      v-model="tagDialogVisible"
+      :title="tagDialogTitle"
+      width="500px"
+      @close="resetTagForm"
+    >
+      <el-form ref="tagFormRef" :model="tagFormData" :rules="tagRules" label-width="90px">
+        <el-form-item label="标签名称" prop="name">
+          <el-input v-model="tagFormData.name" placeholder="请输入标签名称" maxlength="255" show-word-limit />
+        </el-form-item>
+        <el-form-item label="标签描述" prop="desc">
+          <el-input
+            v-model="tagFormData.desc"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入标签描述"
+            maxlength="255"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="tagDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleTagSubmit" :loading="tagSubmitLoading">确定</el-button>
       </template>
     </el-dialog>
 
@@ -253,11 +293,15 @@ import {
   updateBlog,
   deleteBlog,
   getBlogTags,
+  getBlogTagById,
+  addBlogTag,
+  updateBlogTag,
+  deleteBlogTag,
   getBlogComments,
   addComment,
   deleteComment
 } from '@/api/blog'
-import type { BlogVO, BlogAddDTO, BlogUpdateDTO, BlogQueryDTO, PageVO, BlogTagVO, CommentVO, PageDTO, CommentSaveDTO } from '@/types/api'
+import type { BlogVO, BlogAddDTO, BlogUpdateDTO, BlogQueryDTO, PageVO, BlogTagVO, BlogTagSaveDTO, CommentVO, PageDTO, CommentSaveDTO } from '@/types/api'
 
 // ==================== 博客相关状态 ====================
 const loading = ref(false)
@@ -268,7 +312,7 @@ const formRef = ref<FormInstance>()
 const tableData = ref<BlogVO[]>([])
 const total = ref(0)
 const tagList = ref<BlogTagVO[]>([])
-const editingBlogId = ref<number | undefined>()
+const editingBlogId = ref<string | undefined>()
 
 const queryParams = reactive<BlogQueryDTO>({
   pageNo: 1,
@@ -282,6 +326,28 @@ const formData = reactive<BlogAddDTO>({
   content: '',
   tagIds: []
 })
+
+// ==================== 标签相关状态 ====================
+const tagDialogVisible = ref(false)
+const tagSubmitLoading = ref(false)
+const tagFormRef = ref<FormInstance>()
+const editingTagId = ref<string | undefined>()
+
+const tagFormData = reactive<BlogTagSaveDTO>({
+  name: '',
+  desc: ''
+})
+
+const tagRules: FormRules = {
+  name: [
+    { required: true, message: '请输入标签名称', trigger: 'blur' },
+    { max: 255, message: '标签名称不能超过255个字符', trigger: 'blur' }
+  ],
+  desc: [
+    { required: true, message: '请输入标签描述', trigger: 'blur' },
+    { max: 255, message: '标签描述不能超过255个字符', trigger: 'blur' }
+  ]
+}
 
 // 动态规则：新增时标签必填，编辑时标签不验证
 const rules = computed<FormRules>(() => {
@@ -335,10 +401,18 @@ const dialogTitle = computed(() => {
   return editingBlogId.value ? '编辑博客' : '新增博客'
 })
 
+const tagDialogTitle = computed(() => {
+  return editingTagId.value ? '编辑标签' : '新增标签'
+})
+
 // ==================== 工具函数 ====================
 const truncateContent = (content: string) => {
   if (!content) return ''
   return content.length > 100 ? content.substring(0, 100) + '...' : content
+}
+
+const getPageList = <T,>(pageData: PageVO<T>) => {
+  return pageData.list || pageData.records || []
 }
 
 // ==================== 博客相关方法 ====================
@@ -347,7 +421,7 @@ const fetchData = async () => {
   try {
     const res = await getBlogPage(queryParams)
     const pageData = res.data as unknown as PageVO<BlogVO>
-    tableData.value = pageData.list || []
+    tableData.value = getPageList(pageData)
     total.value = pageData.total || 0
   } catch (error) {
     console.error('获取博客列表失败:', error)
@@ -387,7 +461,7 @@ const handleAdd = () => {
 }
 
 const handleEdit = (row: BlogVO) => {
-  editingBlogId.value = Number(row.id)
+  editingBlogId.value = row.id
   Object.assign(formData, {
     title: row.title,
     content: row.content,
@@ -404,7 +478,7 @@ const handleDelete = async (id: string) => {
       type: 'warning'
     })
     
-    await deleteBlog(Number(id))
+    await deleteBlog(id)
     ElMessage.success('删除成功')
     fetchData()
   } catch (error: any) {
@@ -455,6 +529,92 @@ const resetForm = () => {
   })
 }
 
+// ==================== 标签相关方法 ====================
+const handleAddTag = () => {
+  resetTagForm()
+  tagDialogVisible.value = true
+}
+
+const handleEditTag = async (row: BlogTagVO) => {
+  editingTagId.value = row.id
+  tagDialogVisible.value = true
+  try {
+    const res = await getBlogTagById(row.id)
+    const tag = res.data as unknown as BlogTagVO
+    Object.assign(tagFormData, {
+      name: tag.name,
+      desc: tag.desc
+    })
+  } catch (error) {
+    Object.assign(tagFormData, {
+      name: row.name,
+      desc: row.desc
+    })
+    console.error('获取标签详情失败:', error)
+  }
+}
+
+const handleDeleteTag = async (row: BlogTagVO) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除标签「${row.name}」吗？删除后该标签与博客的关联也会被移除。`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    await deleteBlogTag(row.id)
+    ElMessage.success('删除成功')
+    fetchTags()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      console.error('删除标签失败:', error)
+    }
+  }
+}
+
+const handleTagSubmit = async () => {
+  if (!tagFormRef.value) return
+  
+  await tagFormRef.value.validate(async (valid) => {
+    if (valid) {
+      tagSubmitLoading.value = true
+      try {
+        const payload: BlogTagSaveDTO = {
+          name: tagFormData.name,
+          desc: tagFormData.desc
+        }
+        
+        if (editingTagId.value) {
+          await updateBlogTag(editingTagId.value, payload)
+        } else {
+          await addBlogTag(payload)
+        }
+        
+        ElMessage.success(editingTagId.value ? '修改成功' : '新增成功')
+        tagDialogVisible.value = false
+        fetchTags()
+      } catch (error) {
+        console.error('提交标签失败:', error)
+      } finally {
+        tagSubmitLoading.value = false
+      }
+    }
+  })
+}
+
+const resetTagForm = () => {
+  tagFormRef.value?.resetFields()
+  editingTagId.value = undefined
+  Object.assign(tagFormData, {
+    name: '',
+    desc: ''
+  })
+}
+
 // ==================== 评论相关方法 ====================
 const handleViewComments = (row: BlogVO) => {
   currentBlog.value = row
@@ -469,9 +629,9 @@ const fetchComments = async () => {
   
   commentLoading.value = true
   try {
-    const res = await getBlogComments(Number(currentBlog.value.id), commentPageParams)
+    const res = await getBlogComments(currentBlog.value.id, commentPageParams)
     const pageData = res.data as unknown as PageVO<CommentVO>
-    commentList.value = pageData.list || []
+    commentList.value = getPageList(pageData)
     commentTotal.value = pageData.total || 0
   } catch (error) {
     console.error('获取评论列表失败:', error)
@@ -492,7 +652,7 @@ const handleAddComment = async () => {
     if (valid) {
       commentSubmitLoading.value = true
       try {
-        await addComment(Number(currentBlog.value!.id), commentFormData)
+        await addComment(currentBlog.value!.id, commentFormData)
         ElMessage.success('评论发表成功')
         addCommentDialogVisible.value = false
         commentFormData.content = ''
@@ -514,7 +674,7 @@ const handleDeleteComment = async (commentId: string) => {
       type: 'warning'
     })
     
-    await deleteComment(Number(commentId))
+    await deleteComment(commentId)
     ElMessage.success('删除成功')
     fetchComments()
   } catch (error: any) {
@@ -557,11 +717,10 @@ onMounted(() => {
   align-items: center;
 }
 
-.tags-container {
-  min-height: 60px;
+.tag-actions {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  gap: 10px;
 }
 
 .comment-header {
