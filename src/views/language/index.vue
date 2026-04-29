@@ -206,6 +206,15 @@ const rules: FormRules = {
   name: [
     { required: true, message: '请输入语言名称', trigger: 'blur' },
     { max: 50, message: '语言名称最多50个字符', trigger: 'blur' }
+  ],
+  version: [
+    { required: true, message: '请输入版本号', trigger: 'blur' }
+  ],
+  executeCommand: [
+    { required: true, message: '请输入执行命令', trigger: 'blur' }
+  ],
+  sourceFileExt: [
+    { required: true, message: '请输入源文件扩展名', trigger: 'blur' }
   ]
 }
 

@@ -49,7 +49,7 @@ export function getLanguageAdminById(id: number) {
  * 新增编程语言 (POST /language)
  */
 export function addLanguage(data: LanguageSaveDTO) {
-  return request<ResponseResult<boolean>>({
+  return request<ResponseResult<LanguageVO>>({
     url: '/language',
     method: 'post',
     data
