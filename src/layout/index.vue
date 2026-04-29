@@ -55,6 +55,14 @@
             <el-icon><Document /></el-icon>
             <template #title>题目管理</template>
           </el-menu-item>
+          <el-menu-item index="/problem-set">
+            <el-icon><Collection /></el-icon>
+            <template #title>题单管理</template>
+          </el-menu-item>
+          <el-menu-item index="/contest">
+            <el-icon><Trophy /></el-icon>
+            <template #title>竞赛管理</template>
+          </el-menu-item>
           <el-menu-item index="/language" v-permission="'LANGUAGE.LIST'">
             <el-icon><Setting /></el-icon>
             <template #title>语言管理</template>

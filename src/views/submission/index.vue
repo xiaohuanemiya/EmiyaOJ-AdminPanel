@@ -155,11 +155,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh } from '@element-plus/icons-vue'
 import { getSubmissionPage, getSubmissionById } from '@/api/submission'
 import type { SubmissionVO, SubmissionDetailVO, SubmissionQueryDTO } from '@/types/api'
 import { SubmissionStatus } from '@/types/api'
+
+type TagType = 'success' | 'primary' | 'warning' | 'info' | 'danger'
 
 const loading = ref(false)
 const tableData = ref<SubmissionVO[]>([])
@@ -231,12 +232,12 @@ async function handleRowClick(row: SubmissionVO) {
 }
 
 /** 状态码 -> 标签类型 */
-function getStatusTagType(status: SubmissionStatus): string {
-  const map: Record<number, string> = {
+function getStatusTagType(status: SubmissionStatus): TagType {
+  const map: Record<number, TagType> = {
     [SubmissionStatus.PENDING]: 'info',
     [SubmissionStatus.JUDGING]: 'warning',
     [SubmissionStatus.AC]: 'success',
-    [SubmissionStatus.CE]: '',
+    [SubmissionStatus.CE]: 'info',
     [SubmissionStatus.SE]: 'danger',
     [SubmissionStatus.WA]: 'danger',
     [SubmissionStatus.TLE]: 'warning',

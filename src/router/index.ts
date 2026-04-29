@@ -44,6 +44,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '题目管理', icon: 'Document', permission: 'PROBLEM.LIST' }
       },
       {
+        path: 'problem-set',
+        name: 'ProblemSet',
+        component: () => import('@/views/problemSet/index.vue'),
+        meta: { title: '题单管理', icon: 'Collection' }
+      },
+      {
+        path: 'contest',
+        name: 'Contest',
+        component: () => import('@/views/contest/index.vue'),
+        meta: { title: '竞赛管理', icon: 'Trophy' }
+      },
+      {
         path: 'language',
         name: 'Language',
         component: () => import('@/views/language/index.vue'),

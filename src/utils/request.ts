@@ -28,6 +28,17 @@ service.interceptors.request.use(
       
       if (config.headers) {
         config.headers.Authorization = token
+        const userInfo = localStorage.getItem('userInfo')
+        if (userInfo) {
+          try {
+            const parsedUser = JSON.parse(userInfo) as { id?: string | number }
+            if (parsedUser.id) {
+              config.headers['X-User-Id'] = String(parsedUser.id)
+            }
+          } catch {
+            localStorage.removeItem('userInfo')
+          }
+        }
       }
     }
     return config

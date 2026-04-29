@@ -430,3 +430,129 @@ export interface CommentVO {
   createTime: string;
   updateTime: string;
 }
+
+// ========== 竞赛相关 ==========
+
+export enum ContestRuleType {
+  ACM = 1,
+  IOI = 2,
+  CODEFORCES = 3
+}
+
+export enum ContestStatus {
+  DRAFT = 0,
+  PUBLISHED = 1,
+  CANCELLED = 2
+}
+
+export interface ContestQueryDTO {
+  pageNum?: number;
+  pageSize?: number;
+  title?: string;
+  ruleType?: number;
+  status?: number;
+  startFrom?: string;
+  startTo?: string;
+}
+
+export interface ContestProblemDTO {
+  problemId: number;
+  label: string;
+  sortOrder: number;
+  score: number;
+}
+
+export interface ContestSaveDTO {
+  id?: number;
+  title: string;
+  description?: string;
+  ruleType: number;
+  startTime: string;
+  endTime: string;
+  freezeBeforeMinutes?: number;
+  inviteCode?: string;
+  status: number;
+  problems?: ContestProblemDTO[];
+}
+
+export interface ContestProblemVO extends ContestProblemDTO {
+  id?: number;
+  contestId?: number;
+  title?: string;
+  problemTitle?: string;
+}
+
+export interface ContestVO {
+  id: number;
+  title: string;
+  description?: string;
+  ruleType: number;
+  startTime: string;
+  endTime: string;
+  freezeBeforeMinutes?: number;
+  inviteCode?: string;
+  status: number;
+  creatorId?: number;
+  problemCount?: number;
+  problems?: ContestProblemVO[];
+  createTime?: string;
+  updateTime?: string;
+}
+
+export interface ContestRegistrationVO {
+  id?: number;
+  contestId?: number;
+  userId: number;
+  username?: string;
+  nickname?: string;
+  registerTime?: string;
+  createTime?: string;
+}
+
+// ========== 题单相关 ==========
+
+export enum ProblemSetStatus {
+  HIDDEN = 0,
+  PUBLIC = 1
+}
+
+export interface ProblemSetQueryDTO {
+  pageNum?: number;
+  pageSize?: number;
+  title?: string;
+  status?: number;
+  creatorId?: number;
+}
+
+export interface ProblemSetProblemDTO {
+  problemId: number;
+  sortOrder: number;
+  note?: string;
+}
+
+export interface ProblemSetSaveDTO {
+  id?: number;
+  title: string;
+  description?: string;
+  status: number;
+  problems?: ProblemSetProblemDTO[];
+}
+
+export interface ProblemSetProblemVO extends ProblemSetProblemDTO {
+  id?: number;
+  problemSetId?: number;
+  title?: string;
+  problemTitle?: string;
+}
+
+export interface ProblemSetVO {
+  id: number;
+  title: string;
+  description?: string;
+  creatorId: number;
+  status: number;
+  problemCount?: number;
+  problems?: ProblemSetProblemVO[];
+  createTime?: string;
+  updateTime?: string;
+}
