@@ -63,6 +63,10 @@
             <el-icon><EditPen /></el-icon>
             <template #title>博客管理</template>
           </el-menu-item>
+          <el-menu-item index="/submission" v-permission="'SUBMISSION.LIST'">
+            <el-icon><List /></el-icon>
+            <template #title>判题管理</template>
+          </el-menu-item>
         </el-menu>
       </div>
 

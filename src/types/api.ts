@@ -286,6 +286,64 @@ export enum LanguageStatus {
   ENABLED = 1
 }
 
+// ========== 判题提交相关 ==========
+
+/** 判题状态枚举 */
+export enum SubmissionStatus {
+  PENDING = 0,
+  JUDGING = 1,
+  AC = 2,
+  CE = 3,
+  SE = 4,
+  WA = 5,
+  TLE = 6,
+  MLE = 7,
+  RE = 8,
+  OLE = 9,
+  PA = 10
+}
+
+export interface SubmissionQueryDTO {
+  pageNum?: number
+  pageSize?: number
+  problemId?: number
+  userId?: number
+}
+
+export interface SubmissionVO {
+  id: number
+  problemId: number
+  userId: number
+  languageId: number
+  status: SubmissionStatus
+  passedCaseCount: number
+  totalCaseCount: number
+  score: number
+  maxTimeUsed: number
+  maxMemoryUsed: number
+  errorMessage: string
+  compileMessage: string
+  createTime: string
+  finishTime: string
+}
+
+export interface SubmissionCaseResultVO {
+  id: number
+  submissionId: number
+  testCaseId: number
+  caseOrder: number
+  status: SubmissionStatus
+  score: number
+  timeUsed: number
+  memoryUsed: number
+  errorMessage: string
+  createTime: string
+}
+
+export interface SubmissionDetailVO extends SubmissionVO {
+  caseResults: SubmissionCaseResultVO[]
+}
+
 // ========== 博客相关 ==========
 
 export interface BlogQueryDTO {

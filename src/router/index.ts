@@ -54,6 +54,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Blog',
         component: () => import('@/views/blog/index.vue'),
         meta: { title: '博客管理', icon: 'EditPen', permission: 'BLOG.LIST' }
+      },
+      {
+        path: 'submission',
+        name: 'Submission',
+        component: () => import('@/views/submission/index.vue'),
+        meta: { title: '判题管理', icon: 'List', permission: 'SUBMISSION.LIST' }
       }
     ]
   },
