@@ -9,16 +9,50 @@
             v-model="queryParams.title"
             placeholder="请输入博客标题"
             clearable
-            style="width: 200px; margin-right: 10px;"
+            style="width: 180px; margin-right: 10px;"
             @keyup.enter="handleSearch"
           />
+          <el-select
+            v-model="queryParams.blogType"
+            placeholder="博客类型"
+            clearable
+            style="width: 130px; margin-right: 10px;"
+          >
+            <el-option label="普通博客" :value="0" />
+            <el-option label="题解" :value="1" />
+          </el-select>
+          <el-select
+            v-model="queryParams.tagId"
+            placeholder="按标签筛选"
+            clearable
+            style="width: 150px; margin-right: 10px;"
+            :loading="tagsLoading"
+          >
+            <el-option
+              v-for="tag in tagList"
+              :key="tag.id"
+              :label="tag.name"
+              :value="Number(tag.id)"
+            />
+          </el-select>
+          <el-select
+            v-model="queryParams.sortBy"
+            placeholder="排序方式"
+            clearable
+            style="width: 140px; margin-right: 10px;"
+          >
+            <el-option label="创建时间" value="createTime" />
+            <el-option label="更新时间" value="updateTime" />
+            <el-option label="浏览量" value="viewCount" />
+            <el-option label="点赞数" value="likeCount" />
+          </el-select>
           <el-date-picker
             v-model="queryParams.createTime"
             type="date"
             placeholder="选择日期"
             value-format="YYYY-MM-DDTHH:mm:ss"
             clearable
-            style="width: 180px; margin-right: 10px;"
+            style="width: 160px; margin-right: 10px;"
           />
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
@@ -43,10 +77,17 @@
         :data="tableData"
         style="margin-top: 20px;"
       >
-        <el-table-column prop="id" label="ID" width="120" show-overflow-tooltip />
-        <el-table-column prop="title" label="博客标题" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="userId" label="用户ID" width="120" show-overflow-tooltip />
-        <el-table-column label="标签" width="200">
+        <el-table-column prop="id" label="ID" width="80" show-overflow-tooltip />
+        <el-table-column prop="title" label="博客标题" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="userId" label="用户ID" width="100" show-overflow-tooltip />
+        <el-table-column label="类型" width="90" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.blogType === 1 ? 'success' : ''" size="small">
+              {{ row.blogType === 1 ? '题解' : '博客' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="标签" width="180">
           <template #default="{ row }">
             <template v-if="row.tags && row.tags.length > 0">
               <el-tag
@@ -61,13 +102,15 @@
             <span v-else style="color: #909399;">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="content" label="内容预览" min-width="200">
+        <el-table-column prop="viewCount" label="浏览量" width="90" align="center" sortable />
+        <el-table-column prop="likeCount" label="点赞" width="80" align="center" sortable />
+        <el-table-column prop="content" label="内容预览" min-width="160">
           <template #default="{ row }">
             <span>{{ truncateContent(row.content) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column prop="updateTime" label="更新时间" width="180" />
+        <el-table-column prop="createTime" label="创建时间" width="170" />
+        <el-table-column prop="updateTime" label="更新时间" width="170" />
         <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
             <el-button type="info" size="small" @click="handleViewComments(row)">
@@ -146,11 +189,19 @@
         <el-form-item label="博客标题" prop="title">
           <el-input v-model="formData.title" placeholder="请输入博客标题" maxlength="50" show-word-limit />
         </el-form-item>
+        <el-form-item label="博客类型" prop="blogType">
+          <el-radio-group v-model="formData.blogType">
+            <el-radio :value="0">普通博客</el-radio>
+            <el-radio :value="1">题解</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="formData.blogType === 1" label="关联题目ID" prop="problemId">
+          <el-input-number v-model="formData.problemId" :min="1" placeholder="请输入题目ID" style="width: 100%;" />
+        </el-form-item>
         <el-form-item label="博客内容" prop="content">
           <el-input v-model="formData.content" type="textarea" :rows="10" placeholder="请输入博客内容" maxlength="10000" show-word-limit />
         </el-form-item>
-        <!-- 标签只在新增时可选择，编辑时不支持修改标签 -->
-        <el-form-item v-if="!editingBlogId" label="标签" prop="tagIds">
+        <el-form-item label="标签" prop="tagIds">
           <el-select
             v-model="formData.tagIds"
             multiple
@@ -162,16 +213,16 @@
               v-for="tag in tagList"
               :key="tag.id"
               :label="tag.name"
-              :value="tag.id"
+              :value="Number(tag.id)"
             />
           </el-select>
-          <div class="el-form-item__tip" style="color: #909399; font-size: 12px; margin-top: 4px;">
-            提示：标签在博客发布后无法修改
-          </div>
         </el-form-item>
-        <el-alert v-else type="info" :closable="false" style="margin-bottom: 15px;">
-          注意：修改博客不支持更新标签，如需修改标签请删除后重新发布
-        </el-alert>
+        <el-form-item label="已绑图片">
+          <div v-if="formData.pictureIds && formData.pictureIds.length > 0" style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <span v-for="pid in formData.pictureIds" :key="pid" style="color: #409EFF;">ID: {{ pid }}</span>
+          </div>
+          <span v-else style="color: #909399;">暂无绑定图片</span>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -301,7 +352,7 @@ import {
   addComment,
   deleteComment
 } from '@/api/blog'
-import type { BlogVO, BlogAddDTO, BlogUpdateDTO, BlogQueryDTO, PageVO, BlogTagVO, BlogTagSaveDTO, CommentVO, PageDTO, CommentSaveDTO } from '@/types/api'
+import type { BlogVO, BlogSaveDTO, BlogUpdateDTO, BlogQueryDTO, PageVO, BlogTagVO, BlogTagSaveDTO, CommentVO, PageDTO, CommentSaveDTO } from '@/types/api'
 
 // ==================== 博客相关状态 ====================
 const loading = ref(false)
@@ -318,13 +369,19 @@ const queryParams = reactive<BlogQueryDTO>({
   pageNo: 1,
   pageSize: 10,
   title: undefined,
+  blogType: undefined,
+  tagId: undefined,
+  sortBy: undefined,
   createTime: undefined
 })
 
-const formData = reactive<BlogAddDTO>({
+const formData = reactive<BlogSaveDTO>({
   title: '',
   content: '',
-  tagIds: []
+  blogType: 0,
+  problemId: undefined,
+  tagIds: [],
+  pictureIds: []
 })
 
 // ==================== 标签相关状态 ====================
@@ -349,22 +406,24 @@ const tagRules: FormRules = {
   ]
 }
 
-// 动态规则：新增时标签必填，编辑时标签不验证
+// 动态规则
 const rules = computed<FormRules>(() => {
   const baseRules: FormRules = {
     title: [
       { required: true, message: '请输入博客标题', trigger: 'blur' },
       { max: 50, message: '标题长度不能超过50个字符', trigger: 'blur' }
     ],
+    blogType: [
+      { required: true, message: '请选择博客类型', trigger: 'change' }
+    ],
     content: [
       { required: true, message: '请输入博客内容', trigger: 'blur' },
       { max: 10000, message: '内容长度不能超过10000个字符', trigger: 'blur' }
     ]
   }
-  // 新增时标签必填
-  if (!editingBlogId.value) {
-    baseRules.tagIds = [
-      { required: true, message: '请至少选择一个标签', trigger: 'change', type: 'array', min: 1 }
+  if (formData.blogType === 1) {
+    baseRules.problemId = [
+      { required: true, message: '题解必须关联题目', trigger: 'blur' }
     ]
   }
   return baseRules
@@ -451,6 +510,9 @@ const handleReset = () => {
   queryParams.pageNo = 1
   queryParams.pageSize = 10
   queryParams.title = undefined
+  queryParams.blogType = undefined
+  queryParams.tagId = undefined
+  queryParams.sortBy = undefined
   queryParams.createTime = undefined
   fetchData()
 }
@@ -465,7 +527,10 @@ const handleEdit = (row: BlogVO) => {
   Object.assign(formData, {
     title: row.title,
     content: row.content,
-    tagIds: []
+    blogType: row.blogType ?? 0,
+    problemId: row.problemId ? Number(row.problemId) : undefined,
+    tagIds: (row.tags || []).map(t => Number(t.id)),
+    pictureIds: (row.pictures || []).map(p => Number(p.id))
   })
   dialogVisible.value = true
 }
@@ -503,8 +568,18 @@ const handleSubmit = async () => {
           }
           await updateBlog(editingBlogId.value, updateData)
         } else {
-          // 新增模式：发送完整数据包括 tagIds
-          await addBlog(formData)
+          // 新增模式：发送完整数据
+          const saveData: BlogSaveDTO = {
+            title: formData.title,
+            content: formData.content,
+            blogType: formData.blogType,
+            tagIds: formData.tagIds,
+            pictureIds: formData.pictureIds
+          }
+          if (formData.blogType === 1 && formData.problemId) {
+            saveData.problemId = formData.problemId
+          }
+          await addBlog(saveData)
         }
         
         ElMessage.success(editingBlogId.value ? '修改成功' : '新增成功')
@@ -525,7 +600,10 @@ const resetForm = () => {
   Object.assign(formData, {
     title: '',
     content: '',
-    tagIds: []
+    blogType: 0,
+    problemId: undefined,
+    tagIds: [],
+    pictureIds: []
   })
 }
 

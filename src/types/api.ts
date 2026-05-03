@@ -364,15 +364,22 @@ export interface SubmissionDetailVO extends SubmissionVO {
 
 export interface BlogQueryDTO {
   title?: string;
+  blogType?: number;
+  problemId?: number;
+  tagId?: number;
+  sortBy?: string;
   createTime?: string;
   pageNo: number;
   pageSize: number;
 }
 
-export interface BlogAddDTO {
+export interface BlogSaveDTO {
   title: string;
   content: string;
-  tagIds: string[];
+  blogType?: number;
+  problemId?: number;
+  tagIds?: number[];
+  pictureIds?: number[];
 }
 
 export interface BlogUpdateDTO {
@@ -385,9 +392,26 @@ export interface BlogVO {
   userId: string;
   title: string;
   content: string;
+  blogType: number;
+  problemId?: string;
+  problemTitle?: string;
+  viewCount: number;
+  likeCount: number;
+  liked?: boolean;
   createTime: string;
   updateTime: string;
   tags?: BlogTagVO[];
+  pictures?: BlogPictureVO[];
+}
+
+export interface BlogPictureVO {
+  id: string;
+  blogId?: string;
+  url: string;
+  contentType: string;
+  size: number;
+  originalFilename: string;
+  createTime: string;
 }
 
 export interface BlogTagVO {
@@ -399,14 +423,6 @@ export interface BlogTagVO {
 export interface BlogTagSaveDTO {
   name: string;
   desc: string;
-}
-
-export interface UserBlogVO {
-  userId: string;
-  username: string;
-  nickname: string;
-  blogCount: number;
-  starCount: number;
 }
 
 // ========== 评论相关 ==========

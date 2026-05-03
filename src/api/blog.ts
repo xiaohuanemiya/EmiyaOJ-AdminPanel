@@ -5,27 +5,17 @@ import type {
   PageDTO,
   BlogQueryDTO,
   BlogVO, 
-  BlogAddDTO,
+  BlogSaveDTO,
   BlogUpdateDTO,
   BlogTagVO,
   BlogTagSaveDTO,
+  BlogPictureVO,
   CommentVO,
   CommentQueryDTO,
-  CommentSaveDTO,
-  UserBlogVO
+  CommentSaveDTO
 } from '@/types/api'
 
 // ==================== 博客相关接口 ====================
-
-/**
- * 查询所有博客 (GET /blog)
- */
-export function getAllBlogs() {
-  return request<ResponseResult<BlogVO[]>>({
-    url: '/blog',
-    method: 'get'
-  })
-}
 
 /**
  * 分页条件查询博客列表 (POST /blog/query)
@@ -51,8 +41,8 @@ export function getBlogById(id: string | number) {
 /**
  * 新增博客 (POST /blog)
  */
-export function addBlog(data: BlogAddDTO) {
-  return request<ResponseResult<void>>({
+export function addBlog(data: BlogSaveDTO) {
+  return request<ResponseResult<null>>({
     url: '/blog',
     method: 'post',
     data
@@ -60,10 +50,10 @@ export function addBlog(data: BlogAddDTO) {
 }
 
 /**
- * 修改博客 (PUT /blog/{bid}) - 注意：修改博客不支持更新标签
+ * 修改博客 (PUT /blog/{bid})
  */
 export function updateBlog(id: string | number, data: BlogUpdateDTO) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<null>>({
     url: `/blog/${id}`,
     method: 'put',
     data
@@ -74,7 +64,7 @@ export function updateBlog(id: string | number, data: BlogUpdateDTO) {
  * 删除博客 (DELETE /blog/{bid})
  */
 export function deleteBlog(id: string | number) {
-  return request<ResponseResult<void>>({
+  return request<ResponseResult<null>>({
     url: `/blog/${id}`,
     method: 'delete'
   })
@@ -135,59 +125,29 @@ export function deleteComment(cid: string | number) {
   })
 }
 
-// ==================== 收藏相关接口 ====================
+// ==================== 图片相关接口 ====================
 
 /**
- * 收藏博客 (POST /blog/{bid}/star)
+ * 上传博客图片 (POST /blog/images)
  */
-export function starBlog(blogId: string | number) {
-  return request<ResponseResult<void>>({
-    url: `/blog/${blogId}/star`,
-    method: 'post'
+export function uploadBlogImage(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request<ResponseResult<BlogPictureVO>>({
+    url: '/blog/images',
+    method: 'post',
+    data: formData,
+    headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
 
 /**
- * 取消收藏博客 (DELETE /blog/{bid}/star)
+ * 删除博客图片 (DELETE /blog/images/{id})
  */
-export function unstarBlog(blogId: string | number) {
-  return request<ResponseResult<void>>({
-    url: `/blog/${blogId}/star`,
+export function deleteBlogImage(id: string | number) {
+  return request<ResponseResult<null>>({
+    url: `/blog/images/${id}`,
     method: 'delete'
-  })
-}
-
-// ==================== 用户博客相关接口 ====================
-
-/**
- * 查询用户博客信息 (GET /blog/user/{uid})
- */
-export function getUserBlogInfo(uid: string | number) {
-  return request<ResponseResult<UserBlogVO>>({
-    url: `/blog/user/${uid}`,
-    method: 'get'
-  })
-}
-
-/**
- * 分页查询用户发表的博客 (POST /blog/user/{uid}/blogs/query)
- */
-export function getUserBlogs(uid: string | number, data: PageDTO) {
-  return request<ResponseResult<PageVO<BlogVO>>>({
-    url: `/blog/user/${uid}/blogs/query`,
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 分页查询用户收藏的博客 (POST /blog/user/{uid}/stars/query)
- */
-export function getUserStarredBlogs(uid: string | number, data: PageDTO) {
-  return request<ResponseResult<PageVO<BlogVO>>>({
-    url: `/blog/user/${uid}/stars/query`,
-    method: 'post',
-    data
   })
 }
 
