@@ -131,15 +131,21 @@
 
         <div class="section-title">
           <span>竞赛题目</span>
-          <el-button size="small" type="primary" @click="addProblemRow">
+          <el-button size="small" type="primary" @click="openProblemSearch">
             <el-icon><Plus /></el-icon>
-            添加题目
+            搜索并添加题目
           </el-button>
         </div>
         <el-table :data="formData.problems" border size="small">
-          <el-table-column label="题目 ID" width="150">
+          <el-table-column label="题目" min-width="220">
             <template #default="{ row }">
-              <el-input-number v-model="row.problemId" :min="1" :controls="false" style="width: 100%;" />
+              <div class="problem-cell">
+                <span class="problem-id">#{{ row.problemId }}</span>
+                <span class="problem-title">{{ getProblemTitle(row.problemId) || '（未加载）' }}</span>
+                <el-button size="small" text type="primary" @click="previewProblem(row.problemId)">
+                  <el-icon><View /></el-icon>
+                </el-button>
+              </div>
             </template>
           </el-table-column>
           <el-table-column label="标签" width="120">
@@ -157,7 +163,7 @@
               <el-input-number v-model="row.score" :min="0" style="width: 100%;" />
             </template>
           </el-table-column>
-          <el-table-column label="操作">
+          <el-table-column label="操作" width="80">
             <template #default="{ $index }">
               <el-button type="danger" size="small" @click="removeProblemRow($index)">移除</el-button>
             </template>
@@ -200,11 +206,45 @@
         </el-table-column>
       </el-table>
     </el-dialog>
+
+    <ProblemSearchDialog
+      v-model="problemSearchVisible"
+      :exclude-ids="currentProblemIds"
+      @confirm="onProblemsConfirmed"
+    />
+
+    <el-dialog v-model="previewDialogVisible" title="题目详情" width="760px" destroy-on-close>
+      <div v-if="previewingProblem" class="problem-preview">
+        <h3 class="preview-h">#{{ previewingProblem.id }} {{ previewingProblem.title }}</h3>
+        <div class="preview-tags">
+          <el-tag size="small" :type="getDifficultyTagType(previewingProblem.difficulty)">
+            {{ getDifficultyLabel(previewingProblem.difficulty) }}
+          </el-tag>
+          <el-tag v-for="tag in (previewingProblem.tags || [])" :key="tag" size="small" type="info" effect="plain" style="margin-left:4px;">
+            {{ tag }}
+          </el-tag>
+        </div>
+        <el-divider />
+        <div class="preview-section"><h4>题目描述</h4><div class="preview-text">{{ previewingProblem.description || '暂无描述' }}</div></div>
+        <div v-if="previewingProblem.inputDescription" class="preview-section"><h4>输入描述</h4><div class="preview-text">{{ previewingProblem.inputDescription }}</div></div>
+        <div v-if="previewingProblem.outputDescription" class="preview-section"><h4>输出描述</h4><div class="preview-text">{{ previewingProblem.outputDescription }}</div></div>
+        <el-row :gutter="16">
+          <el-col :span="12" v-if="previewingProblem.sampleInput">
+            <div class="preview-section"><h4>输入样例</h4><pre class="sample-block">{{ previewingProblem.sampleInput }}</pre></div>
+          </el-col>
+          <el-col :span="12" v-if="previewingProblem.sampleOutput">
+            <div class="preview-section"><h4>输出样例</h4><pre class="sample-block">{{ previewingProblem.sampleOutput }}</pre></div>
+          </el-col>
+        </el-row>
+        <div v-if="previewingProblem.hint" class="preview-section"><h4>提示</h4><div class="preview-text">{{ previewingProblem.hint }}</div></div>
+        <div class="preview-meta"><span>时间限制: {{ previewingProblem.timeLimit }}ms</span><span>内存限制: {{ previewingProblem.memoryLimit }}MB</span></div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import {
   addContest,
@@ -218,6 +258,8 @@ import {
   replaceContestProblems,
   updateContest
 } from '@/api/contest'
+import { getProblemById } from '@/api/problem'
+import ProblemSearchDialog from '@/components/ProblemSearchDialog.vue'
 import type {
   ContestProblemDTO,
   ContestQueryDTO,
@@ -225,6 +267,7 @@ import type {
   ContestSaveDTO,
   ContestVO,
   PageVO,
+  ProblemVO,
   UserVO
 } from '@/types/api'
 
@@ -246,6 +289,14 @@ const currentContestId = ref<number>()
 const adminCandidates = ref<UserVO[]>([])
 const selectedAdminIds = ref<number[]>([])
 const registrations = ref<ContestRegistrationVO[]>([])
+const problemSearchVisible = ref(false)
+const previewDialogVisible = ref(false)
+const previewingProblem = ref<ProblemVO | null>(null)
+const problemInfoMap = ref<Map<number, ProblemVO>>(new Map())
+
+const currentProblemIds = computed(() =>
+  (formData.problems || []).map((p) => p.problemId).filter(Boolean)
+)
 
 const queryParams = reactive<ContestQueryDTO>({
   pageNum: 1,
@@ -345,6 +396,7 @@ function handleReset() {
 
 function handleAdd() {
   dialogTitle.value = '新增竞赛'
+  problemInfoMap.value = new Map()
   dialogVisible.value = true
 }
 
@@ -352,6 +404,8 @@ async function handleEdit(row: ContestVO) {
   dialogTitle.value = '编辑竞赛'
   const res = await getContestById(row.id)
   const detail = res.data
+  problemInfoMap.value = new Map()
+  const problems = normalizeProblems(detail.problems || [])
   Object.assign(formData, {
     id: detail.id,
     title: detail.title,
@@ -362,9 +416,15 @@ async function handleEdit(row: ContestVO) {
     freezeBeforeMinutes: detail.freezeBeforeMinutes || 0,
     inviteCode: detail.inviteCode || '',
     status: detail.status,
-    problems: normalizeProblems(detail.problems || [])
+    problems
   })
   dialogVisible.value = true
+  // 批量加载题目标题
+  problems.forEach((p) => {
+    getProblemById(p.problemId).then((r) => {
+      if (r.data) problemInfoMap.value.set(p.problemId, r.data)
+    }).catch(() => {})
+  })
 }
 
 async function handleDelete(id: number) {
@@ -374,17 +434,59 @@ async function handleDelete(id: number) {
   fetchData()
 }
 
-function addProblemRow() {
-  const next = (formData.problems?.length || 0) + 1
-  formData.problems?.push({
-    problemId: 1,
-    label: String.fromCharCode(64 + next),
-    sortOrder: next,
-    score: 100
+function openProblemSearch() {
+  problemSearchVisible.value = true
+}
+
+function onProblemsConfirmed(problems: ProblemVO[]) {
+  const nextOrder = (formData.problems?.length || 0) + 1
+  problems.forEach((p, i) => {
+    problemInfoMap.value.set(p.id, p)
+    const exists = formData.problems?.find((item) => item.problemId === p.id)
+    if (!exists) {
+      formData.problems?.push({
+        problemId: p.id,
+        label: String.fromCharCode(64 + nextOrder + i),
+        sortOrder: nextOrder + i,
+        score: 100
+      })
+    }
   })
 }
 
+async function previewProblem(problemId: number) {
+  previewingProblem.value = problemInfoMap.value.get(problemId) || null
+  previewDialogVisible.value = true
+  if (!previewingProblem.value) {
+    try {
+      const res = await getProblemById(problemId)
+      const data = res.data
+      previewingProblem.value = data
+      problemInfoMap.value.set(problemId, data)
+    } catch {
+      previewDialogVisible.value = false
+      ElMessage.error('获取题目详情失败')
+    }
+  }
+}
+
+function getProblemTitle(problemId: number): string {
+  return problemInfoMap.value.get(problemId)?.title || ''
+}
+
+function getDifficultyLabel(d: number) {
+  const map: Record<number, string> = { 1: '简单', 2: '中等', 3: '困难' }
+  return map[d] || '未知'
+}
+
+function getDifficultyTagType(d: number): 'success' | 'warning' | 'danger' | 'info' {
+  const map: Record<number, string> = { 1: 'success', 2: 'warning', 3: 'danger' }
+  return (map[d] || 'info') as 'success' | 'warning' | 'danger' | 'info'
+}
+
 function removeProblemRow(index: number) {
+  const removed = formData.problems?.[index]
+  if (removed) problemInfoMap.value.delete(removed.problemId)
   formData.problems?.splice(index, 1)
 }
 
@@ -468,6 +570,7 @@ async function removeRegistration(userId: number) {
 
 function resetForm() {
   formRef.value?.resetFields()
+  problemInfoMap.value = new Map()
   Object.assign(formData, {
     id: undefined,
     title: '',
@@ -528,5 +631,82 @@ onMounted(fetchData)
   margin: 8px 0 12px;
   font-weight: 600;
   color: #303133;
+}
+
+.problem-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.problem-id {
+  font-weight: 600;
+  color: #409eff;
+  white-space: nowrap;
+}
+
+.problem-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #606266;
+  font-size: 13px;
+}
+
+/* 题目预览对话框样式 */
+.problem-preview {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.preview-h {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #303133;
+}
+
+.preview-tags {
+  margin-bottom: 4px;
+}
+
+.preview-section {
+  margin-bottom: 12px;
+}
+
+.preview-section h4 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: #606266;
+}
+
+.preview-text {
+  font-size: 13px;
+  color: #303133;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sample-block {
+  margin: 0;
+  padding: 10px;
+  background: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.preview-meta {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+  color: #909399;
+  margin-top: 8px;
 }
 </style>
