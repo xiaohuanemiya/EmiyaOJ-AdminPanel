@@ -44,7 +44,7 @@
               <el-checkbox
                 :model-value="isSelected(row.id)"
                 :disabled="isDisabled(row.id)"
-                @change="(val) => toggleSelect(row, val === true)"
+                @change="handleSelectionChange(row, $event)"
                 @click.stop
               />
             </template>
@@ -150,6 +150,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { getProblemPage } from '@/api/problem'
+import type { CheckboxValueType } from 'element-plus'
 import type { PageVO, ProblemVO } from '@/types/api'
 
 const props = defineProps<{
@@ -234,6 +235,10 @@ function toggleSelect(row: ProblemVO, val: boolean) {
     selectedIds.value = selectedIds.value.filter((id) => id !== row.id)
     selectedProblemsMap.value.delete(row.id)
   }
+}
+
+function handleSelectionChange(row: ProblemVO, val: CheckboxValueType) {
+  toggleSelect(row, val === true)
 }
 
 function removeSelect(id: number) {
