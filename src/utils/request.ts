@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { ElMessage } from 'element-plus'
 import { isTokenExpired } from './jwt'
 import router from '@/router'
@@ -102,4 +102,6 @@ service.interceptors.response.use(
   }
 )
 
-export default service
+type RequestInstance = <T = any>(config: AxiosRequestConfig) => Promise<T>
+
+export default service as unknown as RequestInstance

@@ -44,7 +44,7 @@
               <el-checkbox
                 :model-value="isSelected(row.id)"
                 :disabled="isDisabled(row.id)"
-                @change="(val: boolean) => toggleSelect(row, val)"
+                @change="(val) => toggleSelect(row, val === true)"
                 @click.stop
               />
             </template>
