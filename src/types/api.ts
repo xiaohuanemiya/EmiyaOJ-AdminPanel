@@ -360,6 +360,15 @@ export interface SubmissionDetailVO extends SubmissionVO {
   caseResults: SubmissionCaseResultVO[]
 }
 
+// ========== 博客审核状态枚举 ==========
+
+export enum BlogAuditStatus {
+  PENDING = 0,
+  APPROVED = 1,
+  REJECTED = 2,
+  MANUAL_REVIEW = 3
+}
+
 // ========== 博客相关 ==========
 
 export interface BlogQueryDTO {
@@ -369,6 +378,7 @@ export interface BlogQueryDTO {
   tagId?: number;
   sortBy?: string;
   createTime?: string;
+  auditStatus?: number;
   pageNo: number;
   pageSize: number;
 }
@@ -398,6 +408,8 @@ export interface BlogVO {
   viewCount: number;
   likeCount: number;
   liked?: boolean;
+  auditStatus?: number;
+  auditReason?: string;
   createTime: string;
   updateTime: string;
   tags?: BlogTagVO[];
@@ -431,6 +443,7 @@ export interface CommentQueryDTO {
   blogId?: number;
   fromDay?: string;
   toDay?: string;
+  auditStatus?: number;
 }
 
 export interface CommentSaveDTO {
@@ -443,6 +456,8 @@ export interface CommentVO {
   username: string;
   nickname: string;
   content: string;
+  auditStatus?: number;
+  auditReason?: string;
   createTime: string;
   updateTime: string;
 }

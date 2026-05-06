@@ -204,3 +204,29 @@ export function deleteBlogTag(tagId: string) {
     method: 'delete'
   })
 }
+
+// ==================== 审核相关接口 ====================
+
+/**
+ * 人工更新博客审核状态 (PUT /blog/moderation/blogs/{bid}/status)
+ * 需要 BLOG_MODERATION_MANAGE 权限
+ */
+export function updateBlogAuditStatus(bid: string | number, auditStatus: number, reason?: string) {
+  return request<ResponseResult<null>>({
+    url: `/blog/moderation/blogs/${bid}/status`,
+    method: 'put',
+    params: { auditStatus, reason }
+  })
+}
+
+/**
+ * 人工更新评论审核状态 (PUT /blog/moderation/comments/{cid}/status)
+ * 需要 BLOG_MODERATION_MANAGE 权限
+ */
+export function updateCommentAuditStatus(cid: string | number, auditStatus: number, reason?: string) {
+  return request<ResponseResult<null>>({
+    url: `/blog/moderation/comments/${cid}/status`,
+    method: 'put',
+    params: { auditStatus, reason }
+  })
+}

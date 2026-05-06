@@ -1,5 +1,8 @@
 <template>
   <div class="blog-container">
+    <el-tabs v-model="activeTab" type="border-card">
+      <!-- ==================== 博客管理 Tab ==================== -->
+      <el-tab-pane label="博客管理" name="blogs">
     <!-- 博客列表卡片 -->
     <el-card>
       <!-- 搜索栏 -->
@@ -46,6 +49,17 @@
             <el-option label="浏览量" value="viewCount" />
             <el-option label="点赞数" value="likeCount" />
           </el-select>
+          <el-select
+            v-model="queryParams.auditStatus"
+            placeholder="审核状态"
+            clearable
+            style="width: 130px; margin-right: 10px;"
+          >
+            <el-option label="待审核" :value="0" />
+            <el-option label="已通过" :value="1" />
+            <el-option label="已驳回" :value="2" />
+            <el-option label="人工复核" :value="3" />
+          </el-select>
           <el-date-picker
             v-model="queryParams.createTime"
             type="date"
@@ -64,10 +78,6 @@
           </el-button>
         </div>
         <div class="toolbar-right">
-          <el-button type="primary" v-permission="'BLOG.ADD'" @click="handleAdd">
-            <el-icon><Plus /></el-icon>
-            新增博客
-          </el-button>
         </div>
       </div>
 
@@ -82,8 +92,15 @@
         <el-table-column prop="userId" label="用户ID" width="100" show-overflow-tooltip />
         <el-table-column label="类型" width="90" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.blogType === 1 ? 'success' : ''" size="small">
+            <el-tag :type="row.blogType === 1 ? 'success' : 'info'" size="small">
               {{ row.blogType === 1 ? '题解' : '博客' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="审核状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="getAuditTagType(row.auditStatus)" size="small">
+              {{ getAuditStatusText(row.auditStatus) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -111,13 +128,13 @@
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="170" />
         <el-table-column prop="updateTime" label="更新时间" width="170" />
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
+            <el-button type="primary" size="small" @click="handleViewDetail(row)">
+              查看
+            </el-button>
             <el-button type="info" size="small" @click="handleViewComments(row)">
               评论
-            </el-button>
-            <el-button type="primary" size="small" v-permission="'BLOG.EDIT'" @click="handleEdit(row)">
-              编辑
             </el-button>
             <el-button type="danger" size="small" v-permission="'BLOG.DELETE'" @click="handleDelete(row.id)">
               删除
@@ -178,58 +195,6 @@
       </el-table>
     </el-card>
 
-    <!-- 新增/编辑博客对话框 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="dialogTitle"
-      width="800px"
-      @close="resetForm"
-    >
-      <el-form ref="formRef" :model="formData" :rules="rules" label-width="100px">
-        <el-form-item label="博客标题" prop="title">
-          <el-input v-model="formData.title" placeholder="请输入博客标题" maxlength="50" show-word-limit />
-        </el-form-item>
-        <el-form-item label="博客类型" prop="blogType">
-          <el-radio-group v-model="formData.blogType">
-            <el-radio :value="0">普通博客</el-radio>
-            <el-radio :value="1">题解</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item v-if="formData.blogType === 1" label="关联题目ID" prop="problemId">
-          <el-input-number v-model="formData.problemId" :min="1" placeholder="请输入题目ID" style="width: 100%;" />
-        </el-form-item>
-        <el-form-item label="博客内容" prop="content">
-          <el-input v-model="formData.content" type="textarea" :rows="10" placeholder="请输入博客内容" maxlength="10000" show-word-limit />
-        </el-form-item>
-        <el-form-item label="标签" prop="tagIds">
-          <el-select
-            v-model="formData.tagIds"
-            multiple
-            placeholder="请选择标签"
-            style="width: 100%;"
-            :loading="tagsLoading"
-          >
-            <el-option
-              v-for="tag in tagList"
-              :key="tag.id"
-              :label="tag.name"
-              :value="Number(tag.id)"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="已绑图片">
-          <div v-if="formData.pictureIds && formData.pictureIds.length > 0" style="display: flex; flex-wrap: wrap; gap: 8px;">
-            <span v-for="pid in formData.pictureIds" :key="pid" style="color: #409EFF;">ID: {{ pid }}</span>
-          </div>
-          <span v-else style="color: #909399;">暂无绑定图片</span>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
-      </template>
-    </el-dialog>
-
     <!-- 新增/编辑标签对话框 -->
     <el-dialog
       v-model="tagDialogVisible"
@@ -285,6 +250,13 @@
         <el-table-column prop="id" label="ID" width="120" show-overflow-tooltip />
         <el-table-column prop="username" label="用户名" width="120" />
         <el-table-column prop="nickname" label="昵称" width="120" />
+        <el-table-column label="审核状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="getAuditTagType(row.auditStatus)" size="small">
+              {{ getAuditStatusText(row.auditStatus) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="content" label="评论内容" min-width="200" show-overflow-tooltip />
         <el-table-column prop="createTime" label="评论时间" width="180" />
         <el-table-column label="操作" width="100" fixed="right">
@@ -332,6 +304,55 @@
         <el-button type="primary" @click="handleAddComment" :loading="commentSubmitLoading">发表</el-button>
       </template>
     </el-dialog>
+
+    <!-- 博客详情对话框 -->
+    <el-dialog
+      v-model="detailVisible"
+      title="博客详情"
+      width="750px"
+    >
+      <el-descriptions v-if="detailBlog" :column="2" border>
+        <el-descriptions-item label="ID" :span="1">{{ detailBlog.id }}</el-descriptions-item>
+        <el-descriptions-item label="用户ID" :span="1">{{ detailBlog.userId }}</el-descriptions-item>
+        <el-descriptions-item label="标题" :span="2">{{ detailBlog.title }}</el-descriptions-item>
+        <el-descriptions-item label="类型">
+          <el-tag :type="detailBlog.blogType === 1 ? 'success' : 'info'" size="small">
+            {{ detailBlog.blogType === 1 ? '题解' : '博客' }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="审核状态">
+          <el-tag :type="getAuditTagType(detailBlog.auditStatus)" size="small">
+            {{ getAuditStatusText(detailBlog.auditStatus) }}
+          </el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="浏览量">{{ detailBlog.viewCount }}</el-descriptions-item>
+        <el-descriptions-item label="点赞数">{{ detailBlog.likeCount }}</el-descriptions-item>
+        <el-descriptions-item label="标签" :span="2">
+          <template v-if="detailBlog.tags && detailBlog.tags.length > 0">
+            <el-tag v-for="tag in detailBlog.tags" :key="tag.id" size="small" style="margin-right: 4px;">
+              {{ tag.name }}
+            </el-tag>
+          </template>
+          <span v-else>-</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ detailBlog.createTime }}</el-descriptions-item>
+        <el-descriptions-item label="更新时间">{{ detailBlog.updateTime }}</el-descriptions-item>
+        <el-descriptions-item label="审核原因" :span="2">{{ detailBlog.auditReason || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="博客内容" :span="2">
+          <div class="blog-content-preview">{{ detailBlog.content }}</div>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+      </el-tab-pane>
+
+      <!-- ==================== 审核管理 Tab ==================== -->
+      <el-tab-pane label="审核管理" name="moderation">
+        <BlogModeration />
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
@@ -340,8 +361,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import {
   getBlogPage,
-  addBlog,
-  updateBlog,
+  getBlogById,
   deleteBlog,
   getBlogTags,
   getBlogTagById,
@@ -352,18 +372,19 @@ import {
   addComment,
   deleteComment
 } from '@/api/blog'
-import type { BlogVO, BlogSaveDTO, BlogUpdateDTO, BlogQueryDTO, PageVO, BlogTagVO, BlogTagSaveDTO, CommentVO, PageDTO, CommentSaveDTO } from '@/types/api'
+import type { BlogVO, BlogQueryDTO, PageVO, BlogTagVO, BlogTagSaveDTO, CommentVO, PageDTO, CommentSaveDTO } from '@/types/api'
+import { BlogAuditStatus } from '@/types/api'
+import BlogModeration from './moderation.vue'
+
+// ==================== Tab 状态 ====================
+const activeTab = ref('blogs')
 
 // ==================== 博客相关状态 ====================
 const loading = ref(false)
-const submitLoading = ref(false)
 const tagsLoading = ref(false)
-const dialogVisible = ref(false)
-const formRef = ref<FormInstance>()
 const tableData = ref<BlogVO[]>([])
 const total = ref(0)
 const tagList = ref<BlogTagVO[]>([])
-const editingBlogId = ref<string | undefined>()
 
 const queryParams = reactive<BlogQueryDTO>({
   pageNo: 1,
@@ -372,16 +393,8 @@ const queryParams = reactive<BlogQueryDTO>({
   blogType: undefined,
   tagId: undefined,
   sortBy: undefined,
-  createTime: undefined
-})
-
-const formData = reactive<BlogSaveDTO>({
-  title: '',
-  content: '',
-  blogType: 0,
-  problemId: undefined,
-  tagIds: [],
-  pictureIds: []
+  createTime: undefined,
+  auditStatus: undefined
 })
 
 // ==================== 标签相关状态 ====================
@@ -406,30 +419,9 @@ const tagRules: FormRules = {
   ]
 }
 
-// 动态规则
-const rules = computed<FormRules>(() => {
-  const baseRules: FormRules = {
-    title: [
-      { required: true, message: '请输入博客标题', trigger: 'blur' },
-      { max: 50, message: '标题长度不能超过50个字符', trigger: 'blur' }
-    ],
-    blogType: [
-      { required: true, message: '请选择博客类型', trigger: 'change' }
-    ],
-    content: [
-      { required: true, message: '请输入博客内容', trigger: 'blur' },
-      { max: 10000, message: '内容长度不能超过10000个字符', trigger: 'blur' }
-    ]
-  }
-  if (formData.blogType === 1) {
-    baseRules.problemId = [
-      { required: true, message: '题解必须关联题目', trigger: 'blur' }
-    ]
-  }
-  return baseRules
+const tagDialogTitle = computed(() => {
+  return editingTagId.value ? '编辑标签' : '新增标签'
 })
-
-// ==================== 评论相关状态 ====================
 const commentDialogVisible = ref(false)
 const addCommentDialogVisible = ref(false)
 const commentLoading = ref(false)
@@ -456,18 +448,31 @@ const commentRules: FormRules = {
 }
 
 // ==================== 计算属性 ====================
-const dialogTitle = computed(() => {
-  return editingBlogId.value ? '编辑博客' : '新增博客'
-})
-
-const tagDialogTitle = computed(() => {
-  return editingTagId.value ? '编辑标签' : '新增标签'
-})
 
 // ==================== 工具函数 ====================
 const truncateContent = (content: string) => {
   if (!content) return ''
   return content.length > 100 ? content.substring(0, 100) + '...' : content
+}
+
+const getAuditStatusText = (status?: number) => {
+  switch (status) {
+    case BlogAuditStatus.PENDING: return '待审核'
+    case BlogAuditStatus.APPROVED: return '已通过'
+    case BlogAuditStatus.REJECTED: return '已驳回'
+    case BlogAuditStatus.MANUAL_REVIEW: return '人工复核'
+    default: return '未知'
+  }
+}
+
+const getAuditTagType = (status?: number): 'success' | 'warning' | 'danger' | 'info' | undefined => {
+  switch (status) {
+    case BlogAuditStatus.PENDING: return 'info'
+    case BlogAuditStatus.APPROVED: return 'success'
+    case BlogAuditStatus.REJECTED: return 'danger'
+    case BlogAuditStatus.MANUAL_REVIEW: return 'warning'
+    default: return undefined
+  }
 }
 
 const getPageList = <T,>(pageData: PageVO<T>) => {
@@ -514,25 +519,24 @@ const handleReset = () => {
   queryParams.tagId = undefined
   queryParams.sortBy = undefined
   queryParams.createTime = undefined
+  queryParams.auditStatus = undefined
   fetchData()
 }
 
-const handleAdd = () => {
-  resetForm()
-  dialogVisible.value = true
-}
+// ==================== 博客详情 ====================
+const detailVisible = ref(false)
+const detailBlog = ref<BlogVO | null>(null)
 
-const handleEdit = (row: BlogVO) => {
-  editingBlogId.value = row.id
-  Object.assign(formData, {
-    title: row.title,
-    content: row.content,
-    blogType: row.blogType ?? 0,
-    problemId: row.problemId ? Number(row.problemId) : undefined,
-    tagIds: (row.tags || []).map(t => Number(t.id)),
-    pictureIds: (row.pictures || []).map(p => Number(p.id))
-  })
-  dialogVisible.value = true
+const handleViewDetail = async (row: BlogVO) => {
+  try {
+    const res = await getBlogById(row.id)
+    detailBlog.value = res.data as unknown as BlogVO
+    detailVisible.value = true
+  } catch (error) {
+    // 请求失败时直接用列表数据展示
+    detailBlog.value = row
+    detailVisible.value = true
+  }
 }
 
 const handleDelete = async (id: string) => {
@@ -551,60 +555,6 @@ const handleDelete = async (id: string) => {
       console.error('删除失败:', error)
     }
   }
-}
-
-const handleSubmit = async () => {
-  if (!formRef.value) return
-  
-  await formRef.value.validate(async (valid) => {
-    if (valid) {
-      submitLoading.value = true
-      try {
-        if (editingBlogId.value) {
-          // 编辑模式：只发送 title 和 content
-          const updateData: BlogUpdateDTO = {
-            title: formData.title,
-            content: formData.content
-          }
-          await updateBlog(editingBlogId.value, updateData)
-        } else {
-          // 新增模式：发送完整数据
-          const saveData: BlogSaveDTO = {
-            title: formData.title,
-            content: formData.content,
-            blogType: formData.blogType,
-            tagIds: formData.tagIds,
-            pictureIds: formData.pictureIds
-          }
-          if (formData.blogType === 1 && formData.problemId) {
-            saveData.problemId = formData.problemId
-          }
-          await addBlog(saveData)
-        }
-        
-        ElMessage.success(editingBlogId.value ? '修改成功' : '新增成功')
-        dialogVisible.value = false
-        fetchData()
-      } catch (error) {
-        console.error('提交失败:', error)
-      } finally {
-        submitLoading.value = false
-      }
-    }
-  })
-}
-
-const resetForm = () => {
-  formRef.value?.resetFields()
-  editingBlogId.value = undefined
-  Object.assign(formData, {
-    title: '',
-    content: '',
-    blogType: 0,
-    problemId: undefined,
-    tagIds: [],
-    pictureIds: []
-  })
 }
 
 // ==================== 标签相关方法 ====================
@@ -804,5 +754,13 @@ onMounted(() => {
 .comment-header {
   display: flex;
   gap: 10px;
+}
+
+.blog-content-preview {
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
 }
 </style>
