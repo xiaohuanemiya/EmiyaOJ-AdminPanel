@@ -148,13 +148,21 @@ export interface LanguageSaveDTO {
   id?: number;
   name: string;
   version: string;
-  compileCommand?: string;
-  executeCommand: string;
+  languageVersion: string;
+  compileFileName?: string;
   sourceFileExt: string;
-  executableExt?: string;
+  executableFileName?: string;
+  compiledFileNames?: string | null;
+  compileCommand?: string | null;
+  runCommand: string;
+  envVars?: string | null;
   isCompiled?: number;
   timeLimitMultiplier?: number;
   memoryLimitMultiplier?: number;
+  compileTimeLimit?: number;
+  compileMemoryLimit?: number;
+  compileProcLimit?: number;
+  runProcLimit?: number;
   status?: number;
 }
 
@@ -162,13 +170,21 @@ export interface LanguageVO {
   id: number;
   name: string;
   version: string;
-  compileCommand: string;
-  executeCommand: string;
+  languageVersion: string;
+  compileFileName: string;
   sourceFileExt: string;
-  executableExt: string;
+  executableFileName: string;
+  compiledFileNames: string | null;
+  compileCommand: string | null;
+  runCommand: string;
+  envVars: string | null;
   isCompiled: number;
   timeLimitMultiplier: number;
   memoryLimitMultiplier: number;
+  compileTimeLimit: number;
+  compileMemoryLimit: number;
+  compileProcLimit: number;
+  runProcLimit: number;
   status: number;
 }
 
@@ -286,19 +302,94 @@ export enum LanguageStatus {
   ENABLED = 1
 }
 
+// ========== 判题提交相关 ==========
+
+/** 判题状态枚举 */
+export enum SubmissionStatus {
+  PENDING = 0,
+  JUDGING = 1,
+  AC = 2,
+  CE = 3,
+  SE = 4,
+  WA = 5,
+  TLE = 6,
+  MLE = 7,
+  RE = 8,
+  OLE = 9,
+  PA = 10
+}
+
+export interface SubmissionQueryDTO {
+  pageNum?: number
+  pageSize?: number
+  problemId?: number
+  userId?: number
+}
+
+export interface SubmissionVO {
+  id: number
+  problemId: number
+  userId: number
+  languageId: number
+  status: SubmissionStatus
+  passedCaseCount: number
+  totalCaseCount: number
+  score: number
+  maxTimeUsed: number
+  maxMemoryUsed: number
+  errorMessage: string
+  compileMessage: string
+  createTime: string
+  finishTime: string
+}
+
+export interface SubmissionCaseResultVO {
+  id: number
+  submissionId: number
+  testCaseId: number
+  caseOrder: number
+  status: SubmissionStatus
+  score: number
+  timeUsed: number
+  memoryUsed: number
+  errorMessage: string
+  createTime: string
+}
+
+export interface SubmissionDetailVO extends SubmissionVO {
+  caseResults: SubmissionCaseResultVO[]
+}
+
+// ========== 博客审核状态枚举 ==========
+
+export enum BlogAuditStatus {
+  PENDING = 0,
+  APPROVED = 1,
+  REJECTED = 2,
+  MANUAL_REVIEW = 3
+}
+
 // ========== 博客相关 ==========
 
 export interface BlogQueryDTO {
   title?: string;
+  blogType?: number;
+  problemId?: number;
+  tagId?: number;
+  sortBy?: string;
   createTime?: string;
+  auditStatus?: number;
   pageNo: number;
   pageSize: number;
 }
 
-export interface BlogAddDTO {
+export interface BlogSaveDTO {
   title: string;
   content: string;
-  tagIds: string[];
+  blogType?: number;
+  problemId?: number;
+  tagIds?: number[];
+  pictureIds?: number[];
 }
 
 export interface BlogUpdateDTO {
@@ -311,9 +402,28 @@ export interface BlogVO {
   userId: string;
   title: string;
   content: string;
+  blogType: number;
+  problemId?: string;
+  problemTitle?: string;
+  viewCount: number;
+  likeCount: number;
+  liked?: boolean;
+  auditStatus?: number;
+  auditReason?: string;
   createTime: string;
   updateTime: string;
   tags?: BlogTagVO[];
+  pictures?: BlogPictureVO[];
+}
+
+export interface BlogPictureVO {
+  id: string;
+  blogId?: string;
+  url: string;
+  contentType: string;
+  size: number;
+  originalFilename: string;
+  createTime: string;
 }
 
 export interface BlogTagVO {
@@ -327,20 +437,13 @@ export interface BlogTagSaveDTO {
   desc: string;
 }
 
-export interface UserBlogVO {
-  userId: string;
-  username: string;
-  nickname: string;
-  blogCount: number;
-  starCount: number;
-}
-
 // ========== 评论相关 ==========
 
 export interface CommentQueryDTO {
   blogId?: number;
   fromDay?: string;
   toDay?: string;
+  auditStatus?: number;
 }
 
 export interface CommentSaveDTO {
@@ -353,6 +456,134 @@ export interface CommentVO {
   username: string;
   nickname: string;
   content: string;
+  auditStatus?: number;
+  auditReason?: string;
   createTime: string;
   updateTime: string;
+}
+
+// ========== 竞赛相关 ==========
+
+export enum ContestRuleType {
+  ACM = 1,
+  IOI = 2,
+  CODEFORCES = 3
+}
+
+export enum ContestStatus {
+  DRAFT = 0,
+  PUBLISHED = 1,
+  CANCELLED = 2
+}
+
+export interface ContestQueryDTO {
+  pageNum?: number;
+  pageSize?: number;
+  title?: string;
+  ruleType?: number;
+  status?: number;
+  startFrom?: string;
+  startTo?: string;
+}
+
+export interface ContestProblemDTO {
+  problemId: number;
+  label: string;
+  sortOrder: number;
+  score: number;
+}
+
+export interface ContestSaveDTO {
+  id?: number;
+  title: string;
+  description?: string;
+  ruleType: number;
+  startTime: string;
+  endTime: string;
+  freezeBeforeMinutes?: number;
+  inviteCode?: string;
+  status: number;
+  problems?: ContestProblemDTO[];
+}
+
+export interface ContestProblemVO extends ContestProblemDTO {
+  id?: number;
+  contestId?: number;
+  title?: string;
+  problemTitle?: string;
+}
+
+export interface ContestVO {
+  id: number;
+  title: string;
+  description?: string;
+  ruleType: number;
+  startTime: string;
+  endTime: string;
+  freezeBeforeMinutes?: number;
+  inviteCode?: string;
+  status: number;
+  creatorId?: number;
+  problemCount?: number;
+  problems?: ContestProblemVO[];
+  createTime?: string;
+  updateTime?: string;
+}
+
+export interface ContestRegistrationVO {
+  id?: number;
+  contestId?: number;
+  userId: number;
+  username?: string;
+  nickname?: string;
+  registerTime?: string;
+  createTime?: string;
+}
+
+// ========== 题单相关 ==========
+
+export enum ProblemSetStatus {
+  HIDDEN = 0,
+  PUBLIC = 1
+}
+
+export interface ProblemSetQueryDTO {
+  pageNum?: number;
+  pageSize?: number;
+  title?: string;
+  status?: number;
+  creatorId?: number;
+}
+
+export interface ProblemSetProblemDTO {
+  problemId: number;
+  sortOrder: number;
+  note?: string;
+}
+
+export interface ProblemSetSaveDTO {
+  id?: number;
+  title: string;
+  description?: string;
+  status: number;
+  problems?: ProblemSetProblemDTO[];
+}
+
+export interface ProblemSetProblemVO extends ProblemSetProblemDTO {
+  id?: number;
+  problemSetId?: number;
+  title?: string;
+  problemTitle?: string;
+}
+
+export interface ProblemSetVO {
+  id: number;
+  title: string;
+  description?: string;
+  creatorId: number;
+  status: number;
+  problemCount?: number;
+  problems?: ProblemSetProblemVO[];
+  createTime?: string;
+  updateTime?: string;
 }

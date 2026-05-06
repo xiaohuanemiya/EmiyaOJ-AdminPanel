@@ -44,6 +44,18 @@ const routes: RouteRecordRaw[] = [
         meta: { title: '题目管理', icon: 'Document', permission: 'PROBLEM.LIST' }
       },
       {
+        path: 'problem-set',
+        name: 'ProblemSet',
+        component: () => import('@/views/problemSet/index.vue'),
+        meta: { title: '题单管理', icon: 'Collection' }
+      },
+      {
+        path: 'contest',
+        name: 'Contest',
+        component: () => import('@/views/contest/index.vue'),
+        meta: { title: '竞赛管理', icon: 'Trophy' }
+      },
+      {
         path: 'language',
         name: 'Language',
         component: () => import('@/views/language/index.vue'),
@@ -54,6 +66,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Blog',
         component: () => import('@/views/blog/index.vue'),
         meta: { title: '博客管理', icon: 'EditPen', permission: 'BLOG.LIST' }
+      },
+      {
+        path: 'submission',
+        name: 'Submission',
+        component: () => import('@/views/submission/index.vue'),
+        meta: { title: '判题管理', icon: 'List', permission: 'SUBMISSION.LIST' }
       }
     ]
   },
