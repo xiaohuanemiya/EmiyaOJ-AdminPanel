@@ -46,7 +46,7 @@ export interface UserSaveDTO {
   username: string;
   password?: string;
   nickname?: string;
-  email?: string;
+  email: string;
   phone?: string;
   avatar?: string;
   status?: number;
