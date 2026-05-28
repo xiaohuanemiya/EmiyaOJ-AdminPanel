@@ -246,8 +246,8 @@ export interface ProblemVO {
 export interface TestCaseSaveDTO {
   id?: number;
   problemId: number;
-  input: string;
-  output: string;
+  input?: string | null;
+  output?: string | null;
   isSample?: number;
   score?: number;
   sortOrder?: number;
@@ -586,4 +586,54 @@ export interface ProblemSetVO {
   problems?: ProblemSetProblemVO[];
   createTime?: string;
   updateTime?: string;
+}
+
+// ========== 测试数据生成器相关 ==========
+
+/** 创建/更新生成器描述 */
+export interface TestCaseGeneratorSpecSaveDTO {
+  spec: string;
+}
+
+/** 更新生成器脚本 */
+export interface TestCaseGeneratorUpdateDTO {
+  generatorCode: string;
+}
+
+/** 运行生成器 */
+export interface RunTestCaseGeneratorDTO {
+  saveMode?: string; // APPEND 或 REPLACE，默认 APPEND
+}
+
+/** 生成器描述 VO */
+export interface TestCaseGeneratorSpecVO {
+  problemId: number;
+  spec: string;
+  createBy: number;
+  updateBy: number;
+  createTime: string;
+  updateTime: string;
+}
+
+/** 完整生成器 VO */
+export interface TestCaseGeneratorVO {
+  id: number;
+  problemId: number;
+  spec: string;
+  generatorCode: string;
+  createBy: number;
+  updateBy: number;
+  createTime: string;
+  updateTime: string;
+}
+
+/** 运行生成器结果 VO */
+export interface RunTestCaseGeneratorVO {
+  problemId: number;
+  saveMode: string;
+  generatedCount: number;
+  savedCount: number;
+  timeUsed: number;
+  memoryUsed: number;
+  testCases: TestCaseVO[];
 }

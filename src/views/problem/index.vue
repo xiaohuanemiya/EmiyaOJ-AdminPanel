@@ -89,13 +89,16 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" v-permission="'PROBLEM.EDIT'" @click="handleEdit(row)">
               编辑
             </el-button>
             <el-button type="warning" size="small" v-permission="'TESTCASE.LIST'" @click="handleTestCase(row)">
               测试用例
+            </el-button>
+            <el-button type="success" size="small" v-permission="'TESTCASE.LIST'" @click="handleGenerator(row)">
+              生成器
             </el-button>
             <el-button type="danger" size="small" v-permission="'PROBLEM.DELETE'" @click="handleDelete(row.id)">
               删除
@@ -237,12 +240,14 @@
         <el-table-column prop="score" label="分值" width="80" />
         <el-table-column label="输入数据" min-width="150">
           <template #default="{ row }">
-            <el-text class="data-preview" truncated>{{ row.input }}</el-text>
+            <el-text v-if="row.input != null" class="data-preview" truncated>{{ row.input }}</el-text>
+            <el-text v-else class="data-preview" type="info" size="small">（空）</el-text>
           </template>
         </el-table-column>
         <el-table-column label="预期输出" min-width="150">
           <template #default="{ row }">
-            <el-text class="data-preview" truncated>{{ row.output }}</el-text>
+            <el-text v-if="row.output != null" class="data-preview" truncated>{{ row.output }}</el-text>
+            <el-text v-else class="data-preview" type="info" size="small">（空）</el-text>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
@@ -293,11 +298,11 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="输入数据" prop="input">
-          <el-input v-model="testCaseFormData.input" type="textarea" :rows="8" placeholder="请输入测试输入数据" />
+        <el-form-item label="输入数据（可选）" prop="input">
+          <el-input v-model="testCaseFormData.input" type="textarea" :rows="8" placeholder="留空表示无标准输入" />
         </el-form-item>
-        <el-form-item label="预期输出" prop="output">
-          <el-input v-model="testCaseFormData.output" type="textarea" :rows="8" placeholder="请输入预期输出数据" />
+        <el-form-item label="预期输出（可选）" prop="output">
+          <el-input v-model="testCaseFormData.output" type="textarea" :rows="8" placeholder="留空表示期望无输出" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -341,6 +346,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import {
   getProblemPage,
@@ -356,6 +362,8 @@ import {
   batchDeleteTestCases
 } from '@/api/testcase'
 import type { ProblemVO, ProblemSaveDTO, ProblemQueryDTO, PageVO, TestCaseVO, TestCaseSaveDTO } from '@/types/api'
+
+const router = useRouter()
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -428,14 +436,7 @@ const testCaseFormData = reactive<TestCaseSaveDTO>({
   sortOrder: 1
 })
 
-const testCaseRules: FormRules = {
-  input: [
-    { required: true, message: '请输入测试输入数据', trigger: 'blur' }
-  ],
-  output: [
-    { required: true, message: '请输入预期输出数据', trigger: 'blur' }
-  ]
-}
+const testCaseRules: FormRules = {}
 
 // 获取难度标签
 const getDifficultyLabel = (difficulty: number) => {
@@ -555,6 +556,11 @@ const handleTestCase = async (row: ProblemVO) => {
   await fetchTestCaseData()
 }
 
+// 打开测试数据生成器
+const handleGenerator = (row: ProblemVO) => {
+  router.push({ path: '/testcase-generator', query: { problemId: row.id, problemTitle: row.title } })
+}
+
 // 获取测试用例数据
 const fetchTestCaseData = async () => {
   if (!currentProblem.value) return
@@ -593,8 +599,8 @@ const handleEditTestCase = (row: TestCaseVO) => {
   Object.assign(testCaseFormData, {
     id: row.id,
     problemId: row.problemId,
-    input: row.input,
-    output: row.output,
+    input: row.input ?? '',
+    output: row.output ?? '',
     isSample: row.isSample,
     score: row.score,
     sortOrder: row.sortOrder
@@ -639,11 +645,16 @@ const handleTestCaseSubmit = async () => {
     if (valid) {
       testCaseSubmitLoading.value = true
       try {
-        if (testCaseFormData.id) {
-          await updateTestCase(testCaseFormData)
+        const submitData = {
+          ...testCaseFormData,
+          input: testCaseFormData.input?.trim() || null,
+          output: testCaseFormData.output?.trim() || null
+        }
+        if (submitData.id) {
+          await updateTestCase(submitData)
           ElMessage.success('修改成功')
         } else {
-          await addTestCase(testCaseFormData)
+          await addTestCase(submitData)
           ElMessage.success('新增成功')
         }
         testCaseFormDialogVisible.value = false
