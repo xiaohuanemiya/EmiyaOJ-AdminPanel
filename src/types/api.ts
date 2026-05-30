@@ -215,6 +215,17 @@ export interface ProblemSaveDTO {
   source?: string;
   status?: number;
   tagIds?: number[];
+  pictureIds?: string[] | null;
+}
+
+export interface ProblemPictureVO {
+  id: string;
+  problemId: string | null;
+  url: string;
+  contentType: string;
+  size: number;
+  originalFilename: string;
+  createTime: string;
 }
 
 export interface ProblemVO {
@@ -239,6 +250,7 @@ export interface ProblemVO {
   createTime: string;
   updateTime: string;
   tags: string[];
+  pictures?: ProblemPictureVO[];
 }
 
 // ========== 测试用例相关 ==========
