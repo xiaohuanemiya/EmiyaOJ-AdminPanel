@@ -9,7 +9,13 @@ RUN npm install
 
 # 复制项目所有文件进行构建
 COPY . .
-RUN npm run build
+ARG VITE_DIFY_BASE_URL
+RUN if [ -n "$VITE_DIFY_BASE_URL" ]; then \
+      export VITE_DIFY_BASE_URL; \
+    else \
+      unset VITE_DIFY_BASE_URL; \
+    fi; \
+    npm run build
 
 # Production stage
 FROM nginx:alpine

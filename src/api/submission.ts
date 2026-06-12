@@ -21,7 +21,7 @@ export function getSubmissionPage(params: SubmissionQueryDTO): Promise<ResponseR
 /**
  * 查询提交详情 (GET /submission/{id})
  */
-export function getSubmissionById(id: number): Promise<ResponseResult<SubmissionDetailVO>> {
+export function getSubmissionById(id: number | string): Promise<ResponseResult<SubmissionDetailVO>> {
   return request<ResponseResult<SubmissionDetailVO>>({
     url: `/submission/${id}`,
     method: 'get'

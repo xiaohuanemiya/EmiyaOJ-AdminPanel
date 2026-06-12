@@ -225,9 +225,9 @@
           </el-tag>
         </div>
         <el-divider />
-        <div class="preview-section"><h4>题目描述</h4><div class="preview-text">{{ previewingProblem.description || '暂无描述' }}</div></div>
-        <div v-if="previewingProblem.inputDescription" class="preview-section"><h4>输入描述</h4><div class="preview-text">{{ previewingProblem.inputDescription }}</div></div>
-        <div v-if="previewingProblem.outputDescription" class="preview-section"><h4>输出描述</h4><div class="preview-text">{{ previewingProblem.outputDescription }}</div></div>
+        <div class="preview-section"><h4>题目描述</h4><MarkdownPreview v-if="previewingProblem.description" :content="previewingProblem.description" /><div v-else class="preview-text">暂无描述</div></div>
+        <div v-if="previewingProblem.inputDescription" class="preview-section"><h4>输入描述</h4><MarkdownPreview :content="previewingProblem.inputDescription" /></div>
+        <div v-if="previewingProblem.outputDescription" class="preview-section"><h4>输出描述</h4><MarkdownPreview :content="previewingProblem.outputDescription" /></div>
         <el-row :gutter="16">
           <el-col :span="12" v-if="previewingProblem.sampleInput">
             <div class="preview-section"><h4>输入样例</h4><pre class="sample-block">{{ previewingProblem.sampleInput }}</pre></div>
@@ -236,7 +236,7 @@
             <div class="preview-section"><h4>输出样例</h4><pre class="sample-block">{{ previewingProblem.sampleOutput }}</pre></div>
           </el-col>
         </el-row>
-        <div v-if="previewingProblem.hint" class="preview-section"><h4>提示</h4><div class="preview-text">{{ previewingProblem.hint }}</div></div>
+        <div v-if="previewingProblem.hint" class="preview-section"><h4>提示</h4><MarkdownPreview :content="previewingProblem.hint" /></div>
         <div class="preview-meta"><span>时间限制: {{ previewingProblem.timeLimit }}ms</span><span>内存限制: {{ previewingProblem.memoryLimit }}MB</span></div>
       </div>
     </el-dialog>
@@ -260,6 +260,7 @@ import {
 } from '@/api/contest'
 import { getProblemById } from '@/api/problem'
 import ProblemSearchDialog from '@/components/ProblemSearchDialog.vue'
+import MarkdownPreview from '@/components/MarkdownPreview.vue'
 import type {
   ContestProblemDTO,
   ContestQueryDTO,
@@ -293,6 +294,7 @@ const problemSearchVisible = ref(false)
 const previewDialogVisible = ref(false)
 const previewingProblem = ref<ProblemVO | null>(null)
 const problemInfoMap = ref<Map<number, ProblemVO>>(new Map())
+let previewRequestId = 0
 
 const currentProblemIds = computed(() =>
   (formData.problems || []).map((p) => p.problemId).filter(Boolean)
@@ -455,15 +457,18 @@ function onProblemsConfirmed(problems: ProblemVO[]) {
 }
 
 async function previewProblem(problemId: number) {
+  const requestId = ++previewRequestId
   previewingProblem.value = problemInfoMap.value.get(problemId) || null
   previewDialogVisible.value = true
-  if (!previewingProblem.value) {
-    try {
-      const res = await getProblemById(problemId)
-      const data = res.data
-      previewingProblem.value = data
-      problemInfoMap.value.set(problemId, data)
-    } catch {
+  try {
+    const res = await getProblemById(problemId)
+    if (requestId !== previewRequestId || !previewDialogVisible.value) return
+
+    const data = res.data
+    previewingProblem.value = data
+    problemInfoMap.value.set(problemId, data)
+  } catch {
+    if (requestId === previewRequestId && previewDialogVisible.value && !previewingProblem.value) {
       previewDialogVisible.value = false
       ElMessage.error('获取题目详情失败')
     }
