@@ -56,12 +56,14 @@
         <el-table-column prop="score" label="分值" width="80" />
         <el-table-column label="输入数据" min-width="200">
           <template #default="{ row }">
-            <el-text class="data-preview" truncated>{{ row.input }}</el-text>
+            <el-text v-if="row.input != null" class="data-preview" truncated>{{ row.input }}</el-text>
+            <el-text v-else class="data-preview" type="info" size="small">（空）</el-text>
           </template>
         </el-table-column>
         <el-table-column label="预期输出" min-width="200">
           <template #default="{ row }">
-            <el-text class="data-preview" truncated>{{ row.output }}</el-text>
+            <el-text v-if="row.output != null" class="data-preview" truncated>{{ row.output }}</el-text>
+            <el-text v-else class="data-preview" type="info" size="small">（空）</el-text>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
@@ -108,11 +110,11 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="输入数据" prop="input">
-          <el-input v-model="formData.input" type="textarea" :rows="8" placeholder="请输入测试输入数据" />
+        <el-form-item label="输入数据（可选）" prop="input">
+          <el-input v-model="formData.input" type="textarea" :rows="8" placeholder="留空表示无标准输入" />
         </el-form-item>
-        <el-form-item label="预期输出" prop="output">
-          <el-input v-model="formData.output" type="textarea" :rows="8" placeholder="请输入预期输出数据" />
+        <el-form-item label="预期输出（可选）" prop="output">
+          <el-input v-model="formData.output" type="textarea" :rows="8" placeholder="留空表示期望无输出" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -196,14 +198,7 @@ const formData = reactive<TestCaseSaveDTO>({
   sortOrder: 1
 })
 
-const rules: FormRules = {
-  input: [
-    { required: true, message: '请输入测试输入数据', trigger: 'blur' }
-  ],
-  output: [
-    { required: true, message: '请输入预期输出数据', trigger: 'blur' }
-  ]
-}
+const rules: FormRules = {}
 
 const dialogTitle = ref('新增测试用例')
 
@@ -251,8 +246,8 @@ const handleEdit = (row: TestCaseVO) => {
   Object.assign(formData, {
     id: row.id,
     problemId: row.problemId,
-    input: row.input,
-    output: row.output,
+    input: row.input ?? '',
+    output: row.output ?? '',
     isSample: row.isSample,
     score: row.score,
     sortOrder: row.sortOrder
@@ -297,11 +292,16 @@ const handleSubmit = async () => {
     if (valid) {
       submitLoading.value = true
       try {
-        if (formData.id) {
-          await updateTestCase(formData)
+        const submitData = {
+          ...formData,
+          input: formData.input?.trim() || null,
+          output: formData.output?.trim() || null
+        }
+        if (submitData.id) {
+          await updateTestCase(submitData)
           ElMessage.success('修改成功')
         } else {
-          await addTestCase(formData)
+          await addTestCase(submitData)
           ElMessage.success('新增成功')
         }
         dialogVisible.value = false

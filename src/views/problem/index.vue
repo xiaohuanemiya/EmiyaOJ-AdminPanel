@@ -89,13 +89,23 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" v-permission="'PROBLEM.EDIT'" @click="handleEdit(row)">
+            <el-button
+              type="primary"
+              size="small"
+              :loading="editingProblemId === row.id"
+              :disabled="editingProblemId !== undefined && editingProblemId !== row.id"
+              v-permission="'PROBLEM.EDIT'"
+              @click="handleEdit(row)"
+            >
               编辑
             </el-button>
             <el-button type="warning" size="small" v-permission="'TESTCASE.LIST'" @click="handleTestCase(row)">
               测试用例
+            </el-button>
+            <el-button type="success" size="small" v-permission="'TESTCASE.LIST'" @click="handleGenerator(row)">
+              生成器
             </el-button>
             <el-button type="danger" size="small" v-permission="'PROBLEM.DELETE'" @click="handleDelete(row.id)">
               删除
@@ -121,21 +131,56 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="800px"
+      width="1100px"
+      destroy-on-close
       @close="resetForm"
     >
       <el-form ref="formRef" :model="formData" :rules="rules" label-width="100px">
         <el-form-item label="题目标题" prop="title">
           <el-input v-model="formData.title" placeholder="请输入题目标题" maxlength="255" show-word-limit />
         </el-form-item>
-        <el-form-item label="题目描述" prop="description">
-          <el-input v-model="formData.description" type="textarea" :rows="5" placeholder="请输入题目描述" />
+        <el-form-item label="题面内容" prop="description">
+          <div class="markdown-section">
+            <el-tabs v-model="activeMarkdownField" class="markdown-tabs">
+              <el-tab-pane
+                v-for="tab in markdownTabs"
+                :key="tab.name"
+                :label="tab.label"
+                :name="tab.name"
+              />
+            </el-tabs>
+            <ProblemMarkdownEditor
+              ref="markdownEditorRef"
+              v-model="activeMarkdownContent"
+              :placeholder="activeMarkdownPlaceholder"
+              @image-uploaded="handleImageUploaded"
+            />
+          </div>
         </el-form-item>
-        <el-form-item label="输入描述" prop="inputDescription">
-          <el-input v-model="formData.inputDescription" type="textarea" :rows="3" placeholder="请输入输入描述" />
-        </el-form-item>
-        <el-form-item label="输出描述" prop="outputDescription">
-          <el-input v-model="formData.outputDescription" type="textarea" :rows="3" placeholder="请输入输出描述" />
+        <el-form-item label="题目图片">
+          <div class="picture-section">
+            <el-empty v-if="currentPictures.length === 0" description="暂无题目图片" :image-size="60" />
+            <div v-else class="picture-grid">
+              <div v-for="picture in currentPictures" :key="picture.id" class="picture-card">
+                <el-image
+                  :src="picture.url"
+                  :preview-src-list="[picture.url]"
+                  fit="cover"
+                  class="picture-preview"
+                  preview-teleported
+                />
+                <div class="picture-info">
+                  <el-text truncated>{{ picture.originalFilename }}</el-text>
+                  <span>{{ formatPictureSize(picture.size) }}</span>
+                </div>
+                <div class="picture-actions">
+                  <el-button size="small" text type="primary" @click="handleInsertPicture(picture)">插入</el-button>
+                  <el-button size="small" text type="primary" @click="handleDownloadPicture(picture)">下载</el-button>
+                  <el-button size="small" text type="danger" @click="handleDeletePicture(picture)">删除</el-button>
+                </div>
+              </div>
+            </div>
+          </div>
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
@@ -149,9 +194,6 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="提示信息" prop="hint">
-          <el-input v-model="formData.hint" type="textarea" :rows="2" placeholder="请输入提示信息" />
-        </el-form-item>
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="难度" prop="difficulty">
@@ -237,12 +279,14 @@
         <el-table-column prop="score" label="分值" width="80" />
         <el-table-column label="输入数据" min-width="150">
           <template #default="{ row }">
-            <el-text class="data-preview" truncated>{{ row.input }}</el-text>
+            <el-text v-if="row.input != null" class="data-preview" truncated>{{ row.input }}</el-text>
+            <el-text v-else class="data-preview" type="info" size="small">（空）</el-text>
           </template>
         </el-table-column>
         <el-table-column label="预期输出" min-width="150">
           <template #default="{ row }">
-            <el-text class="data-preview" truncated>{{ row.output }}</el-text>
+            <el-text v-if="row.output != null" class="data-preview" truncated>{{ row.output }}</el-text>
+            <el-text v-else class="data-preview" type="info" size="small">（空）</el-text>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
@@ -293,11 +337,11 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="输入数据" prop="input">
-          <el-input v-model="testCaseFormData.input" type="textarea" :rows="8" placeholder="请输入测试输入数据" />
+        <el-form-item label="输入数据（可选）" prop="input">
+          <el-input v-model="testCaseFormData.input" type="textarea" :rows="8" placeholder="留空表示无标准输入" />
         </el-form-item>
-        <el-form-item label="预期输出" prop="output">
-          <el-input v-model="testCaseFormData.output" type="textarea" :rows="8" placeholder="请输入预期输出数据" />
+        <el-form-item label="预期输出（可选）" prop="output">
+          <el-input v-model="testCaseFormData.output" type="textarea" :rows="8" placeholder="留空表示期望无输出" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -336,17 +380,23 @@
         <el-button @click="testCaseViewDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <DifyChatbot />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { computed, ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
 import {
   getProblemPage,
+  getProblemById,
   addProblem,
   updateProblem,
-  deleteProblem
+  deleteProblem,
+  deleteProblemImage,
+  downloadProblemImage
 } from '@/api/problem'
 import {
   getTestCasesByProblemId,
@@ -355,14 +405,46 @@ import {
   deleteTestCase,
   batchDeleteTestCases
 } from '@/api/testcase'
-import type { ProblemVO, ProblemSaveDTO, ProblemQueryDTO, PageVO, TestCaseVO, TestCaseSaveDTO } from '@/types/api'
+import ProblemMarkdownEditor from '@/components/ProblemMarkdownEditor.vue'
+import DifyChatbot from '@/components/DifyChatbot.vue'
+import { removeProblemImageMarkdown } from '@/utils/markdown'
+import type {
+  ProblemPictureVO,
+  ProblemVO,
+  ProblemSaveDTO,
+  ProblemQueryDTO,
+  PageVO,
+  TestCaseVO,
+  TestCaseSaveDTO
+} from '@/types/api'
+
+type MarkdownField = 'description' | 'inputDescription' | 'outputDescription' | 'hint'
+type ProblemMarkdownEditorExpose = {
+  insertImage: (picture: ProblemPictureVO) => void
+}
+
+const router = useRouter()
 
 const loading = ref(false)
 const submitLoading = ref(false)
 const dialogVisible = ref(false)
+const editingProblemId = ref<number>()
 const formRef = ref<FormInstance>()
+const markdownEditorRef = ref<ProblemMarkdownEditorExpose>()
 const tableData = ref<ProblemVO[]>([])
 const total = ref(0)
+const activeMarkdownField = ref<MarkdownField>('description')
+const currentPictures = ref<ProblemPictureVO[]>([])
+const newlyUploadedPictureIds = ref<Set<string>>(new Set())
+const cleanupUploadsOnClose = ref(true)
+let problemDetailRequestId = 0
+
+const markdownTabs: Array<{ name: MarkdownField; label: string; placeholder: string }> = [
+  { name: 'description', label: '题目描述', placeholder: '请输入题目描述 Markdown' },
+  { name: 'inputDescription', label: '输入描述', placeholder: '请输入输入描述 Markdown' },
+  { name: 'outputDescription', label: '输出描述', placeholder: '请输入输出描述 Markdown' },
+  { name: 'hint', label: '提示信息', placeholder: '请输入提示信息 Markdown' }
+]
 
 const queryParams = reactive<ProblemQueryDTO>({
   pageNum: 1,
@@ -385,7 +467,19 @@ const formData = reactive<ProblemSaveDTO>({
   memoryLimit: 256,
   stackLimit: 128,
   source: '',
-  status: 1
+  status: 1,
+  pictureIds: []
+})
+
+const activeMarkdownContent = computed({
+  get: () => formData[activeMarkdownField.value] || '',
+  set: (value: string) => {
+    formData[activeMarkdownField.value] = value
+  }
+})
+
+const activeMarkdownPlaceholder = computed(() => {
+  return markdownTabs.find(tab => tab.name === activeMarkdownField.value)?.placeholder || ''
 })
 
 const rules: FormRules = {
@@ -428,14 +522,7 @@ const testCaseFormData = reactive<TestCaseSaveDTO>({
   sortOrder: 1
 })
 
-const testCaseRules: FormRules = {
-  input: [
-    { required: true, message: '请输入测试输入数据', trigger: 'blur' }
-  ],
-  output: [
-    { required: true, message: '请输入预期输出数据', trigger: 'blur' }
-  ]
-}
+const testCaseRules: FormRules = {}
 
 // 获取难度标签
 const getDifficultyLabel = (difficulty: number) => {
@@ -496,30 +583,115 @@ const handleReset = () => {
 
 // 新增
 const handleAdd = () => {
+  problemDetailRequestId += 1
+  editingProblemId.value = undefined
   dialogTitle.value = '新增题目'
+  cleanupUploadsOnClose.value = true
+  activeMarkdownField.value = 'description'
   dialogVisible.value = true
 }
 
 // 编辑
-const handleEdit = (row: ProblemVO) => {
+const handleEdit = async (row: ProblemVO) => {
+  const requestId = ++problemDetailRequestId
+  editingProblemId.value = row.id
   dialogTitle.value = '编辑题目'
-  Object.assign(formData, {
-    id: row.id,
-    title: row.title,
-    description: row.description,
-    inputDescription: row.inputDescription,
-    outputDescription: row.outputDescription,
-    sampleInput: row.sampleInput,
-    sampleOutput: row.sampleOutput,
-    hint: row.hint,
-    difficulty: row.difficulty,
-    timeLimit: row.timeLimit,
-    memoryLimit: row.memoryLimit,
-    stackLimit: row.stackLimit,
-    source: row.source,
-    status: row.status
-  })
-  dialogVisible.value = true
+  cleanupUploadsOnClose.value = true
+  activeMarkdownField.value = 'description'
+  try {
+    const res = await getProblemById(row.id)
+    if (requestId !== problemDetailRequestId) return
+
+    const detail = res.data
+    const pictures = detail.pictures || []
+    Object.assign(formData, {
+      id: detail.id,
+      title: detail.title,
+      description: detail.description,
+      inputDescription: detail.inputDescription,
+      outputDescription: detail.outputDescription,
+      sampleInput: detail.sampleInput,
+      sampleOutput: detail.sampleOutput,
+      hint: detail.hint,
+      difficulty: detail.difficulty,
+      timeLimit: detail.timeLimit,
+      memoryLimit: detail.memoryLimit,
+      stackLimit: detail.stackLimit,
+      source: detail.source,
+      status: detail.status,
+      pictureIds: pictures.map(picture => picture.id)
+    })
+    currentPictures.value = pictures
+    dialogVisible.value = true
+  } catch (error) {
+    if (requestId === problemDetailRequestId) {
+      console.error('获取题目详情失败:', error)
+    }
+  } finally {
+    if (requestId === problemDetailRequestId) {
+      editingProblemId.value = undefined
+    }
+  }
+}
+
+const formatPictureSize = (size: number) => {
+  if (size < 1024) return `${size} B`
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`
+  return `${(size / 1024 / 1024).toFixed(1)} MB`
+}
+
+const handleImageUploaded = (picture: ProblemPictureVO) => {
+  if (!dialogVisible.value) {
+    void deleteProblemImage(picture.id)
+    return
+  }
+
+  if (!currentPictures.value.some(item => item.id === picture.id)) {
+    currentPictures.value.push(picture)
+  }
+  const pictureIds = new Set(formData.pictureIds || [])
+  pictureIds.add(picture.id)
+  formData.pictureIds = [...pictureIds]
+  newlyUploadedPictureIds.value.add(picture.id)
+}
+
+const handleInsertPicture = (picture: ProblemPictureVO) => {
+  markdownEditorRef.value?.insertImage(picture)
+}
+
+const handleDownloadPicture = async (picture: ProblemPictureVO) => {
+  try {
+    const blob = await downloadProblemImage(picture.id)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = picture.originalFilename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  } catch (error) {
+    console.error('下载题目图片失败:', error)
+  }
+}
+
+const handleDeletePicture = async (picture: ProblemPictureVO) => {
+  try {
+    await ElMessageBox.confirm(`确认删除图片「${picture.originalFilename}」吗？`, '提示', { type: 'warning' })
+    await deleteProblemImage(picture.id)
+    currentPictures.value = currentPictures.value.filter(item => item.id !== picture.id)
+    formData.pictureIds = (formData.pictureIds || []).filter(id => id !== picture.id)
+    newlyUploadedPictureIds.value.delete(picture.id)
+    const markdownFields: MarkdownField[] = ['description', 'inputDescription', 'outputDescription', 'hint']
+    markdownFields.forEach(field => {
+      formData[field] = removeProblemImageMarkdown(formData[field], picture.url)
+    })
+    ElMessage.success('图片删除成功')
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除题目图片失败:', error)
+    }
+  }
 }
 
 // 删除
@@ -553,6 +725,11 @@ const handleTestCase = async (row: ProblemVO) => {
   currentProblem.value = row
   testCaseDialogVisible.value = true
   await fetchTestCaseData()
+}
+
+// 打开测试数据生成器
+const handleGenerator = (row: ProblemVO) => {
+  router.push({ path: '/testcase-generator', query: { problemId: row.id, problemTitle: row.title } })
 }
 
 // 获取测试用例数据
@@ -593,8 +770,8 @@ const handleEditTestCase = (row: TestCaseVO) => {
   Object.assign(testCaseFormData, {
     id: row.id,
     problemId: row.problemId,
-    input: row.input,
-    output: row.output,
+    input: row.input ?? '',
+    output: row.output ?? '',
     isSample: row.isSample,
     score: row.score,
     sortOrder: row.sortOrder
@@ -639,11 +816,16 @@ const handleTestCaseSubmit = async () => {
     if (valid) {
       testCaseSubmitLoading.value = true
       try {
-        if (testCaseFormData.id) {
-          await updateTestCase(testCaseFormData)
+        const submitData = {
+          ...testCaseFormData,
+          input: testCaseFormData.input?.trim() || null,
+          output: testCaseFormData.output?.trim() || null
+        }
+        if (submitData.id) {
+          await updateTestCase(submitData)
           ElMessage.success('修改成功')
         } else {
-          await addTestCase(testCaseFormData)
+          await addTestCase(submitData)
           ElMessage.success('新增成功')
         }
         testCaseFormDialogVisible.value = false
@@ -684,13 +866,18 @@ const handleSubmit = async () => {
     if (valid) {
       submitLoading.value = true
       try {
-        if (formData.id) {
-          await updateProblem(formData)
+        const submitData: ProblemSaveDTO = {
+          ...formData,
+          pictureIds: [...(formData.pictureIds || [])]
+        }
+        if (submitData.id) {
+          await updateProblem(submitData)
           ElMessage.success('修改成功')
         } else {
-          await addProblem(formData)
+          await addProblem(submitData)
           ElMessage.success('新增成功')
         }
+        cleanupUploadsOnClose.value = false
         dialogVisible.value = false
         fetchData()
       } catch (error) {
@@ -704,6 +891,16 @@ const handleSubmit = async () => {
 
 // 重置表单
 const resetForm = () => {
+  problemDetailRequestId += 1
+  editingProblemId.value = undefined
+  if (cleanupUploadsOnClose.value) {
+    const pictureIds = [...newlyUploadedPictureIds.value]
+    void Promise.allSettled(pictureIds.map(id => deleteProblemImage(id)))
+  }
+  newlyUploadedPictureIds.value = new Set()
+  currentPictures.value = []
+  cleanupUploadsOnClose.value = true
+  activeMarkdownField.value = 'description'
   formRef.value?.resetFields()
   Object.assign(formData, {
     id: undefined,
@@ -719,7 +916,8 @@ const resetForm = () => {
     memoryLimit: 256,
     stackLimit: 128,
     source: '',
-    status: 1
+    status: 1,
+    pictureIds: []
   })
 }
 
@@ -750,6 +948,49 @@ onMounted(() => {
 .toolbar-right {
   display: flex;
   gap: 10px;
+}
+
+.markdown-section,
+.picture-section {
+  width: 100%;
+}
+
+.markdown-tabs {
+  margin-bottom: 8px;
+}
+
+.picture-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.picture-card {
+  overflow: hidden;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.picture-preview {
+  display: block;
+  width: 100%;
+  height: 110px;
+}
+
+.picture-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 4px;
+  color: #909399;
+  font-size: 12px;
+}
+
+.picture-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 6px 6px;
 }
 
 .testcase-header {

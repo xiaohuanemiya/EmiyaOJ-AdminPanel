@@ -72,6 +72,12 @@ const routes: RouteRecordRaw[] = [
         name: 'Submission',
         component: () => import('@/views/submission/index.vue'),
         meta: { title: '判题管理', icon: 'List', permission: 'SUBMISSION.LIST' }
+      },
+      {
+        path: 'testcase-generator',
+        name: 'TestCaseGenerator',
+        component: () => import('@/views/testcaseGenerator/index.vue'),
+        meta: { title: '测试数据生成器', icon: 'SetUp', permission: 'TESTCASE.LIST' }
       }
     ]
   },

@@ -84,17 +84,18 @@
 
           <div class="preview-section-item">
             <h4>题目描述</h4>
-            <div class="preview-text">{{ selectedProblem.description || '暂无描述' }}</div>
+            <MarkdownPreview v-if="selectedProblem.description" :content="selectedProblem.description" />
+            <div v-else class="preview-text">暂无描述</div>
           </div>
 
           <div v-if="selectedProblem.inputDescription" class="preview-section-item">
             <h4>输入描述</h4>
-            <div class="preview-text">{{ selectedProblem.inputDescription }}</div>
+            <MarkdownPreview :content="selectedProblem.inputDescription" />
           </div>
 
           <div v-if="selectedProblem.outputDescription" class="preview-section-item">
             <h4>输出描述</h4>
-            <div class="preview-text">{{ selectedProblem.outputDescription }}</div>
+            <MarkdownPreview :content="selectedProblem.outputDescription" />
           </div>
 
           <div class="preview-row">
@@ -110,7 +111,7 @@
 
           <div v-if="selectedProblem.hint" class="preview-section-item">
             <h4>提示</h4>
-            <div class="preview-text">{{ selectedProblem.hint }}</div>
+            <MarkdownPreview :content="selectedProblem.hint" />
           </div>
 
           <div class="preview-meta">
@@ -149,7 +150,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { getProblemPage } from '@/api/problem'
+import { getProblemById, getProblemPage } from '@/api/problem'
+import MarkdownPreview from '@/components/MarkdownPreview.vue'
 import type { CheckboxValueType } from 'element-plus'
 import type { PageVO, ProblemVO } from '@/types/api'
 
@@ -221,8 +223,16 @@ function handleSearch() {
   fetchData()
 }
 
-function handleRowClick(row: ProblemVO) {
+async function handleRowClick(row: ProblemVO) {
   selectedProblem.value = row
+  try {
+    const res = await getProblemById(row.id)
+    if (selectedProblem.value?.id === row.id) {
+      selectedProblem.value = res.data
+    }
+  } catch (error) {
+    console.error('获取题目详情失败:', error)
+  }
 }
 
 function toggleSelect(row: ProblemVO, val: boolean) {
