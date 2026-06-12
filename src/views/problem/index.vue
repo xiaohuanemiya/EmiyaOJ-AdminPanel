@@ -380,6 +380,8 @@
         <el-button @click="testCaseViewDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <DifyChatbot />
   </div>
 </template>
 
@@ -404,6 +406,7 @@ import {
   batchDeleteTestCases
 } from '@/api/testcase'
 import ProblemMarkdownEditor from '@/components/ProblemMarkdownEditor.vue'
+import DifyChatbot from '@/components/DifyChatbot.vue'
 import { removeProblemImageMarkdown } from '@/utils/markdown'
 import type {
   ProblemPictureVO,

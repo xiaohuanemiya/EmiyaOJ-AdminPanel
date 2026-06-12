@@ -4,7 +4,8 @@ $CONTAINER_NAME = "emiyaoj-admin-panel"
 $PORT = 23000
 
 Write-Host "🚀 开始构建 Docker 镜像: ${IMAGE_NAME}..." -ForegroundColor Cyan
-docker build -t $IMAGE_NAME .
+# Set VITE_DIFY_BASE_URL only when Dify uses a separate browser-accessible URL or port.
+docker build --build-arg VITE_DIFY_BASE_URL=$env:VITE_DIFY_BASE_URL -t $IMAGE_NAME .
 
 # 检查是否存在同名且正在运行的旧容器，如果有则停止并删除
 $existingContainer = docker ps -aq -f name=$CONTAINER_NAME

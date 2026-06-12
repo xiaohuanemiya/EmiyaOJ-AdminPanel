@@ -117,12 +117,66 @@
           <el-alert :title="'编译信息'" :description="detail.compileMessage" type="warning" :closable="false" show-icon />
         </div>
 
+        <!-- 智能反馈 -->
+        <div v-if="detail.status !== SubmissionStatus.AC" class="feedback-section">
+          <div class="section-title">
+            <h4>智能反馈</h4>
+            <el-tag v-if="detail.feedback" size="small" type="info">
+              {{ getFeedbackLabel(detail.feedback.source) }}
+            </el-tag>
+          </div>
+          <div v-if="detail.feedback?.content" class="feedback-content">
+            {{ detail.feedback.content }}
+          </div>
+          <el-alert
+            v-else
+            :title="detail.feedback ? '智能反馈暂时不可用' : '智能反馈生成中，请稍后刷新'"
+            type="info"
+            :closable="false"
+            show-icon
+          />
+          <div v-if="detail.feedback?.source === 'LLM'" class="feedback-notice">
+            反馈由 AI 生成，仅供调试参考
+          </div>
+        </div>
+
         <!-- 测试用例明细 -->
         <div v-if="detail.caseResults && detail.caseResults.length > 0" style="margin-top: 20px;">
           <h4 style="margin-bottom: 10px;">测试用例明细</h4>
           <el-table :data="detail.caseResults" size="small" border>
+            <el-table-column type="expand">
+              <template #default="{ row }">
+                <div class="case-detail">
+                  <template v-if="row.isSample === 1">
+                    <div class="case-preview">
+                      <strong>样例输入</strong>
+                      <pre>{{ row.inputPreview ?? '-' }}</pre>
+                    </div>
+                    <div class="case-preview">
+                      <strong>期望输出</strong>
+                      <pre>{{ row.expectedOutputPreview ?? '-' }}</pre>
+                    </div>
+                    <div class="case-preview">
+                      <strong>实际输出</strong>
+                      <pre>{{ row.actualOutputPreview ?? '-' }}</pre>
+                    </div>
+                  </template>
+                  <div v-if="row.outputDiffSummary" class="case-preview">
+                    <strong>输出差异摘要</strong>
+                    <pre>{{ row.outputDiffSummary }}</pre>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
             <el-table-column prop="caseOrder" label="#" width="50" />
             <el-table-column prop="testCaseId" label="用例ID" width="80" />
+            <el-table-column label="类型" width="100">
+              <template #default="{ row }">
+                <el-tag :type="row.isSample === 1 ? 'success' : 'info'" size="small">
+                  {{ row.isSample === 1 ? '公开样例' : '隐藏用例' }}
+                </el-tag>
+              </template>
+            </el-table-column>
             <el-table-column label="状态" width="100">
               <template #default="{ row }">
                 <el-tag :type="getStatusTagType(row.status)" size="small">
@@ -267,6 +321,13 @@ function getStatusLabel(status: SubmissionStatus): string {
   return labels[status] || '未知'
 }
 
+/** 智能反馈来源 -> 展示标签 */
+function getFeedbackLabel(source: string | null): string {
+  if (source === 'LLM') return 'AI 智能反馈'
+  if (source === 'STATIC_FALLBACK') return '判题提示'
+  return '智能反馈'
+}
+
 onMounted(() => {
   fetchData()
 })
@@ -296,5 +357,50 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.feedback-section {
+  margin-top: 20px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.section-title h4 {
+  margin: 0;
+}
+
+.feedback-content {
+  padding: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--el-fill-color-light);
+  border-radius: 4px;
+}
+
+.feedback-notice {
+  margin-top: 8px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+.case-detail {
+  display: grid;
+  gap: 12px;
+  padding: 12px 20px;
+}
+
+.case-preview pre {
+  margin: 6px 0 0;
+  padding: 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--el-fill-color-light);
+  border-radius: 4px;
 }
 </style>

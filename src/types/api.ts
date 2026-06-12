@@ -339,7 +339,7 @@ export interface SubmissionQueryDTO {
 }
 
 export interface SubmissionVO {
-  id: number
+  id: number | string
   problemId: number
   userId: number
   languageId: number
@@ -349,27 +349,47 @@ export interface SubmissionVO {
   score: number
   maxTimeUsed: number
   maxMemoryUsed: number
-  errorMessage: string
-  compileMessage: string
+  errorMessage: string | null
+  compileMessage: string | null
   createTime: string
-  finishTime: string
+  finishTime: string | null
 }
 
 export interface SubmissionCaseResultVO {
-  id: number
-  submissionId: number
-  testCaseId: number
+  id: number | string
+  submissionId: number | string
+  testCaseId: number | string
   caseOrder: number
   status: SubmissionStatus
   score: number
   timeUsed: number
   memoryUsed: number
-  errorMessage: string
+  errorMessage: string | null
+  isSample: 0 | 1
+  inputPreview: string | null
+  expectedOutputPreview: string | null
+  actualOutputPreview: string | null
+  outputDiffSummary: string | null
   createTime: string
+}
+
+export interface JudgeFeedbackVO {
+  id: number | string
+  submissionId: number | string
+  status: 'SUCCESS' | 'STATIC_FALLBACK' | string
+  content: string | null
+  source: 'LLM' | 'STATIC_FALLBACK' | string | null
+  model: string | null
+  agentType: 'JUDGE_FEEDBACK' | string
+  traceId: string | null
+  errorMessage: string | null
+  createTime: string
+  updateTime: string
 }
 
 export interface SubmissionDetailVO extends SubmissionVO {
   caseResults: SubmissionCaseResultVO[]
+  feedback: JudgeFeedbackVO | null
 }
 
 // ========== 博客审核状态枚举 ==========
